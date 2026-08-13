@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
 import staycay.models.Reservation;
+import staycay.models.ReservationStatus;
 import staycay.models.Room;
 import staycay.repositories.ReservationRepository;
 import staycay.repositories.RoomRepository;
@@ -19,6 +20,11 @@ public class ReservationService {
 	private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
 
+    // TODO: payment must be done 1 day after the reservation is created, otherwise the reservation will be canceled automatically.
+    
+    // TODO: prevent double booking of the same room
+
+    // TODO: mail creation of reservation
     @Transactional
     public Reservation createNewReservation(Reservation reservation) {
 
@@ -46,6 +52,9 @@ public class ReservationService {
             );
         }
 
+		// Reservation status is server-managed and not accepted from request body.
+		reservation.setStatus(ReservationStatus.PENDING);
+
         return reservationRepository.save(reservation);
     }
 
@@ -71,6 +80,14 @@ public class ReservationService {
 
 	public Reservation updateReservation(Reservation reservation) {
 		validateReservationDates(reservation);
+		Reservation existingReservation = reservationRepository.findById(reservation.getId()).orElse(null);
+
+		if (existingReservation == null) {
+			throw new IllegalArgumentException("Reservation not found");
+		}
+
+		// Preserve server-managed status on generic update.
+		reservation.setStatus(existingReservation.getStatus());
 		return reservationRepository.save(reservation);
 	}
 

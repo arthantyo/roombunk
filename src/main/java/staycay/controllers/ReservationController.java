@@ -49,9 +49,6 @@ public class ReservationController {
 
     @PostMapping("/")
     public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservation) {
-
-        
-
         return ResponseEntity.ok(reservationService.createNewReservation(reservation));
     }
 
