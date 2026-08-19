@@ -1,8 +1,8 @@
 package staycay.services;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import lombok.RequiredArgsConstructor;
 import staycay.models.Hotel;
@@ -17,8 +17,8 @@ public class HotelService {
         return hotelRepository.save(hotel);
     }
 
-    public List<Hotel> getAllHotels() {
-        return hotelRepository.findAll();
+    public Page<Hotel> getAllHotels(Pageable pageable) {
+        return hotelRepository.findAll(pageable);
     }
 
     public Hotel findHotelById(Long id) {

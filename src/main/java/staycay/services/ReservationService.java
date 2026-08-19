@@ -1,24 +1,26 @@
 package staycay.services;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
 import staycay.models.Reservation;
 import staycay.models.ReservationStatus;
 import staycay.models.Room;
 import staycay.repositories.ReservationRepository;
 import staycay.repositories.RoomRepository;
-
-import jakarta.transaction.Transactional;
+import staycay.repositories.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
 	private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
+    private final UserRepository userRepository;
 
     // TODO: payment must be done 1 day after the reservation is created, otherwise the reservation will be canceled automatically.
     
@@ -26,7 +28,23 @@ public class ReservationService {
 
     // TODO: mail creation of reservation
     @Transactional
-    public Reservation createNewReservation(Reservation reservation) {
+	public Reservation createNewReservation(Long userId, String idempotencyKey, Reservation reservation) {
+
+		Reservation existing = reservationRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+
+		if (existing != null) {
+			if (!existing.getUser().getId().equals(userId)
+					|| !existing.getRoom().getId().equals(reservation.getRoom().getId())
+					|| !existing.getCheckInDate().equals(reservation.getCheckInDate())
+					|| !existing.getCheckOutDate().equals(reservation.getCheckOutDate())) {
+				throw new IllegalArgumentException("Idempotency key was already used for another reservation");
+			}
+			return existing;
+		}
+
+		reservation.setUser(userRepository.findById(userId)
+				.orElseThrow(() -> new IllegalArgumentException("User not found")));
+		reservation.setIdempotencyKey(idempotencyKey);
 
         validateReservationDates(reservation);
 
@@ -90,6 +108,34 @@ public class ReservationService {
 		reservation.setStatus(existingReservation.getStatus());
 		return reservationRepository.save(reservation);
 	}
+
+	public List<DateRange> getAvailableDateRanges(Long roomId, LocalDate from, LocalDate to) {
+		if (from == null || to == null || !to.isAfter(from)) {
+			throw new IllegalArgumentException("to must be after from");
+		}
+
+		List<Reservation> reservations = reservationRepository.findOverlappingReservations(roomId, from, to);
+		List<DateRange> available = new ArrayList<>();
+		LocalDate nextAvailable = from;
+
+		for (Reservation reservation : reservations.stream()
+				.sorted((left, right) -> left.getCheckInDate().compareTo(right.getCheckInDate()))
+				.toList()) {
+			if (nextAvailable.isBefore(reservation.getCheckInDate())) {
+				available.add(new DateRange(nextAvailable, reservation.getCheckInDate()));
+			}
+			if (nextAvailable.isBefore(reservation.getCheckOutDate())) {
+				nextAvailable = reservation.getCheckOutDate();
+			}
+		}
+
+		if (nextAvailable.isBefore(to)) {
+			available.add(new DateRange(nextAvailable, to));
+		}
+		return available;
+	}
+
+	public record DateRange(LocalDate from, LocalDate to) {}
 
 	private void validateReservationDates(Reservation reservation) {
 		if (reservation.getCheckInDate() != null
