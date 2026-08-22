@@ -1,6 +1,7 @@
 package staycay.services;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +10,16 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import staycay.kafka.events.ReservationConfirmedEvent;
+import staycay.models.OutboxEvent;
 import staycay.models.Reservation;
 import staycay.models.ReservationStatus;
 import staycay.models.Room;
+import staycay.repositories.OutboxEventRepository;
 import staycay.repositories.ReservationRepository;
 import staycay.repositories.RoomRepository;
 import staycay.repositories.UserRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +27,11 @@ public class ReservationService {
 	private static final long HOLD_DURATION_SECONDS = 15 * 60; // 15 minutes
 
 	private final ReservationRepository reservationRepository;
-    private final RoomRepository roomRepository;
-    private final UserRepository userRepository;
+        private final RoomRepository roomRepository;
+        private final UserRepository userRepository;
 	private final StringRedisTemplate redisTemplate;
+	private final OutboxEventRepository outboxEventRepository;
+        private final ObjectMapper objectMapper;
 
 	public String createRoomHold(
             Long userId,
@@ -167,6 +174,29 @@ public class ReservationService {
         Reservation saved =
                 reservationRepository.save(reservation);
 
+
+        ReservationConfirmedEvent reservationConfirmedEvent =
+                new ReservationConfirmedEvent(
+                        saved.getId(),
+                        saved.getRoom().getId(),
+                        saved.getUser().getId(),
+                        saved.getUser().getEmail(),
+                        saved.getCheckInDate(),
+                        saved.getCheckOutDate(),
+                        saved.getStatus().name()
+                );
+
+        
+        String payload = objectMapper.writeValueAsString(reservationConfirmedEvent);
+
+        OutboxEvent event = new OutboxEvent();
+        event.setTopic("reservations");
+        event.setEventType("ReservationConfirmed");
+        event.setPayload(payload);
+        event.setPublished(false);
+        event.setCreatedAt(LocalDateTime.now());
+
+        outboxEventRepository.save(event);
 
 		/*
          * Store the result of the idempotent operation in Redis.
