@@ -21,7 +21,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,9 +29,6 @@ import lombok.Setter;
 @EntityListeners(AuditingEntityListener.class)
 @Table(
     name = "reservations",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_reservations_idempotency_key", columnNames = "idempotency_key")
-    },
     indexes = {
     // because we often query for overlapping reservations 
     @Index(
@@ -66,9 +62,6 @@ public class Reservation {
 
     @Column(nullable = false)
     private LocalDate checkOutDate;
-
-    @Column(name = "idempotency_key", nullable = false, updatable = false)
-    private String idempotencyKey;
 
     @Enumerated(EnumType.STRING)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

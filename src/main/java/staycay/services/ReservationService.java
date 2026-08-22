@@ -1,9 +1,10 @@
 package staycay.services;
 
-import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -18,50 +19,126 @@ import staycay.repositories.UserRepository;
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
+	private static final long HOLD_DURATION_SECONDS = 15 * 60; // 15 minutes
+
 	private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+	private final StringRedisTemplate redisTemplate;
 
-    // TODO: payment must be done 1 day after the reservation is created, otherwise the reservation will be canceled automatically.
-    
-    // TODO: prevent double booking of the same room
+	public String createRoomHold(
+            Long userId,
+            Long roomId,
+			Long hotelId,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            String holdToken
+    ) {
+        validateDates(checkIn, checkOut);
 
-    // TODO: mail creation of reservation
-    @Transactional
-	public Reservation createNewReservation(Long userId, String idempotencyKey, Reservation reservation) {
 
-		Reservation existing = reservationRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+		List<Reservation> conflicts =
+			reservationRepository.findOverlappingReservations(
+				roomId,
+				checkIn,
+				checkOut
+			);
 
-		if (existing != null) {
-			if (!existing.getUser().getId().equals(userId)
-					|| !existing.getRoom().getId().equals(reservation.getRoom().getId())
-					|| !existing.getCheckInDate().equals(reservation.getCheckInDate())
-					|| !existing.getCheckOutDate().equals(reservation.getCheckOutDate())) {
-				throw new IllegalArgumentException("Idempotency key was already used for another reservation");
-			}
-			return existing;
+		if (!conflicts.isEmpty()) {
+			throw new IllegalArgumentException(
+				"Room is unavailable for the selected dates."
+			);
 		}
 
-		reservation.setUser(userRepository.findById(userId)
-				.orElseThrow(() -> new IllegalArgumentException("User not found")));
-		reservation.setIdempotencyKey(idempotencyKey);
+        String holdKey = buildHoldKey(
+				hotelId,
+                roomId,
+                checkIn,
+                checkOut
+        );
 
-        validateReservationDates(reservation);
+        String holdValue = userId + ":" + holdToken;
 
-        // lock
-        Long roomId = reservation.getRoom().getId();
+        Boolean acquired = redisTemplate.opsForValue()
+                .setIfAbsent(
+                        holdKey,
+                        holdValue,
+                        java.time.Duration.ofSeconds(HOLD_DURATION_SECONDS)
+                );
+
+        if (!Boolean.TRUE.equals(acquired)) {
+            throw new IllegalArgumentException(
+                    "Room is currently being held by another user"
+            );
+        }
+
+        return holdToken;
+    }
+  
+    @Transactional
+	 public Reservation confirmReservation(
+            Long userId,
+			Long hotelId,
+            Long roomId,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            String holdToken,
+            String idempotencyKey
+    ) {
+		validateDates(checkIn, checkOut);
+
+		String idempotencyRedisKey =
+                "idempotency:" + userId + ":" + idempotencyKey;
+
+        String existingBookingId =
+                redisTemplate.opsForValue().get(idempotencyRedisKey);
+
+        if (existingBookingId != null) {
+            return reservationRepository
+                    .findById(Long.valueOf(existingBookingId))
+                    .orElseThrow(() ->
+                            new IllegalStateException(
+                                    "Idempotency record points to missing reservation"
+                            ));
+        }
+
+        String holdKey = buildHoldKey(
+				hotelId,
+                roomId,
+                checkIn,
+                checkOut
+        );
+
+        String expectedHoldValue = userId + ":" + holdToken;
+
+        String actualHoldValue =
+                redisTemplate.opsForValue().get(holdKey);
+
+        if (actualHoldValue == null) {
+            throw new IllegalArgumentException(
+                    "Room hold has expired"
+            );
+        }
+
+        if (!actualHoldValue.equals(expectedHoldValue)) {
+            throw new IllegalArgumentException(
+                    "Invalid room hold"
+            );
+        }
 
         Room room = roomRepository.findRoomByIdForUpdate(roomId);
 
         if (room == null) {
-            throw new IllegalArgumentException("Room not found");
+            throw new IllegalArgumentException(
+                    "Room not found"
+            );
         }
 
         List<Reservation> conflicts =
                 reservationRepository.findOverlappingReservations(
-                        reservation.getRoom().getId(),
-                        reservation.getCheckInDate(),
-                        reservation.getCheckOutDate()
+                        roomId,
+                        checkIn,
+                        checkOut
                 );
 
         if (!conflicts.isEmpty()) {
@@ -70,8 +147,40 @@ public class ReservationService {
             );
         }
 
-		// Reservation status is server-managed and not accepted from request body.
+		    Reservation reservation = new Reservation();
+
+        reservation.setUser(
+                userRepository.findById(userId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "User not found"
+                                ))
+        );
+
+        reservation.setRoom(room);
+        reservation.setCheckInDate(checkIn);
+        reservation.setCheckOutDate(checkOut);
+
+
 		reservation.setStatus(ReservationStatus.PENDING);
+
+        Reservation saved =
+                reservationRepository.save(reservation);
+
+
+		/*
+         * Store the result of the idempotent operation in Redis.
+         *
+         * This means retrying the same request can return
+         * the same reservation.
+         */
+        redisTemplate.opsForValue().set(
+                idempotencyRedisKey,
+                saved.getId().toString(),
+                java.time.Duration.ofHours(24)
+        );
+
+		redisTemplate.delete(holdKey);
 
         return reservationRepository.save(reservation);
     }
@@ -144,4 +253,38 @@ public class ReservationService {
 			throw new IllegalArgumentException("checkOutDate must be after checkInDate");
 		}
 	}
+
+
+	private void validateDates(
+            LocalDate checkIn,
+            LocalDate checkOut
+    ) {
+        if (checkIn == null || checkOut == null) {
+            throw new IllegalArgumentException(
+                    "Check-in and check-out dates are required"
+            );
+        }
+
+        if (!checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException(
+                    "checkOutDate must be after checkInDate"
+            );
+        }
+    }
+
+
+	private String buildHoldKey(
+			Long hotelId,
+            Long roomId,
+            LocalDate checkIn,
+            LocalDate checkOut
+    ) {
+        return "hold:"
+				+ hotelId
+                + roomId
+                + ":"
+                + checkIn
+                + ":"
+                + checkOut;
+    }
 }

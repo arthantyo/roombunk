@@ -1,5 +1,6 @@
 package staycay.controllers;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -13,15 +14,46 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import staycay.dto.ReservationResponse;
+import staycay.dto.ReservationDto;
+import staycay.dto.ReservationHoldResponse;
 import staycay.models.Reservation;
 import staycay.security.UserPrincipal;
 import staycay.services.ReservationService;
+
+
+// User
+//  ↓
+// React checkout
+//  ↓
+// Stripe payment
+//  ↓
+// Stripe redirects user back to StayCay
+//  ↓
+// React shows "Payment received, confirming reservation..."
+ 
+//         Meanwhile:
+ 
+// Stripe
+//  ↓
+// Webhook → StayCay backend
+//  ↓
+// Verify webhook signature
+//  ↓
+// Verify payment details
+//  ↓
+// reservationService.confirmReservation()
+//  ↓
+// Short PostgreSQL transaction
+//  ↓
+// Create reservation
+//  ↓
+// COMMIT
+//  ↓
+// Send confirmation email
 
 @RestController
 @RequestMapping("/api/v1/reservations")
@@ -31,24 +63,24 @@ public class ReservationController {
     private ReservationService reservationService;
 
     @GetMapping("/")
-    public ResponseEntity<List<ReservationResponse>> getAllReservations(
+    public ResponseEntity<List<ReservationDto>> getAllReservations(
             @AuthenticationPrincipal UserPrincipal user) {
         return ResponseEntity.ok(toResponses(reservationService.getReservationsByUserId(user.userId())));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReservationResponse> getReservationById(
+    public ResponseEntity<ReservationDto> getReservationById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal user) {
         Reservation reservation = reservationService.findReservationById(id);
         if (reservation == null || !reservation.getUser().getId().equals(user.userId())) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(ReservationResponse.from(reservation));
+        return ResponseEntity.ok(ReservationDto.from(reservation));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ReservationResponse>> getReservationsByUserId(
+    public ResponseEntity<List<ReservationDto>> getReservationsByUserId(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserPrincipal user) {
         if (!userId.equals(user.userId())) {
@@ -58,7 +90,7 @@ public class ReservationController {
     }
 
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<ReservationResponse>> getReservationsByRoomId(@PathVariable Long roomId) {
+    public ResponseEntity<List<ReservationDto>> getReservationsByRoomId(@PathVariable Long roomId) {
         return ResponseEntity.ok(toResponses(reservationService.getReservationsByRoomId(roomId)));
     }
 
@@ -70,18 +102,31 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getAvailableDateRanges(roomId, from, to));
     }
 
-    @PostMapping("/")
-        public ResponseEntity<ReservationResponse> createReservation(
+
+    @PostMapping("/hold")
+    public ResponseEntity<ReservationHoldResponse> createHold(
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestHeader("Idempotency-Key") UUID idempotencyKey,
             @RequestBody Reservation reservation) {
-        Reservation createdReservation = reservationService.createNewReservation(
-            user.userId(), idempotencyKey.toString(), reservation);
-        return ResponseEntity.ok(ReservationResponse.from(createdReservation));
+
+        String holdToken = UUID.randomUUID().toString();
+
+        reservationService.createRoomHold(
+                user.userId(),
+                reservation.getRoom().getHotel().getId(),
+                reservation.getRoom().getId(),
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate(),
+                holdToken
+        );
+
+        return ResponseEntity.ok(
+                new ReservationHoldResponse(holdToken,reservation.getRoom().getHotel().getId(), reservation.getRoom().getId(), reservation.getCheckInDate(), reservation.getCheckOutDate(), Instant.now().plusSeconds(15 * 60))
+        );
     }
 
+
     @PutMapping("/{id}")
-        public ResponseEntity<ReservationResponse> updateReservation(
+        public ResponseEntity<ReservationDto> updateReservation(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal user,
             @RequestBody Reservation reservation) {
@@ -90,7 +135,7 @@ public class ReservationController {
             return ResponseEntity.notFound().build();
         }
         reservation.setId(id);
-        return ResponseEntity.ok(ReservationResponse.from(reservationService.updateReservation(reservation)));
+        return ResponseEntity.ok(ReservationDto.from(reservationService.updateReservation(reservation)));
     }
 
     @DeleteMapping("/{id}")
@@ -105,9 +150,12 @@ public class ReservationController {
         return ResponseEntity.ok(true);
     }
 
-    private List<ReservationResponse> toResponses(List<Reservation> reservations) {
+    private List<ReservationDto> toResponses(List<Reservation> reservations) {
         return reservations.stream()
-                .map(ReservationResponse::from)
+                .map(ReservationDto::from)
                 .toList();
     }
+    
+    
 }
+

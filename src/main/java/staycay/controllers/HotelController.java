@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import staycay.dto.HotelDto;
 import staycay.models.Hotel;
 import staycay.services.HotelService;
 
@@ -24,31 +25,31 @@ public class HotelController {
     private HotelService hotelService;
 
     @GetMapping("/")
-    public ResponseEntity<Page<Hotel>> getAllHotels(Pageable pageable) {
-        return ResponseEntity.ok(hotelService.getAllHotels(pageable));
+    public ResponseEntity<Page<HotelDto>> getAllHotels(Pageable pageable) {
+        return ResponseEntity.ok(hotelService.getAllHotels(pageable).map(HotelDto::from));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Hotel> getHotelById(@PathVariable Long id) {
+    public ResponseEntity<HotelDto> getHotelById(@PathVariable Long id) {
         Hotel hotel = hotelService.findHotelById(id);
         if (hotel == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(hotel);
+        return ResponseEntity.ok(HotelDto.from(hotel));
     }
 
     @PostMapping("/")
-    public ResponseEntity<Hotel> createHotel(@RequestBody Hotel hotel) {
-        return ResponseEntity.ok(hotelService.createNewHotel(hotel));
+    public ResponseEntity<HotelDto> createHotel(@RequestBody Hotel hotel) {
+        return ResponseEntity.ok(HotelDto.from(hotelService.createNewHotel(hotel)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Hotel> updateHotel(@PathVariable Long id, @RequestBody Hotel hotel) {
+    public ResponseEntity<HotelDto> updateHotel(@PathVariable Long id, @RequestBody Hotel hotel) {
         if (hotelService.findHotelById(id) == null) {
             return ResponseEntity.notFound().build();
         }
         hotel.setId(id);
-        return ResponseEntity.ok(hotelService.updateHotel(hotel));
+        return ResponseEntity.ok(HotelDto.from(hotelService.updateHotel(hotel)));
     }
 
     @DeleteMapping("/{id}")

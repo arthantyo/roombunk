@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import staycay.dto.RoomDto;
 import staycay.models.Room;
 import staycay.services.RoomService;
 
@@ -24,36 +25,36 @@ public class RoomController {
     private RoomService roomService;
 
     @GetMapping("/")
-    public ResponseEntity<List<Room>> getAllRooms() {
-        return ResponseEntity.ok(roomService.getAllRooms());
+    public ResponseEntity<List<RoomDto>> getAllRooms() {
+        return ResponseEntity.ok(roomService.getAllRooms().stream().map(RoomDto::from).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Room> getRoomById(@PathVariable Long id) {
+    public ResponseEntity<RoomDto> getRoomById(@PathVariable Long id) {
         Room room = roomService.findRoomById(id);
         if (room == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(room);
+        return ResponseEntity.ok(RoomDto.from(room));
     }
 
     @GetMapping("/hotel/{hotelId}")
-    public ResponseEntity<List<Room>> getRoomsByHotelId(@PathVariable Long hotelId) {
-        return ResponseEntity.ok(roomService.getRoomsByHotelId(hotelId));
+    public ResponseEntity<List<RoomDto>> getRoomsByHotelId(@PathVariable Long hotelId) {
+        return ResponseEntity.ok(roomService.getRoomsByHotelId(hotelId).stream().map(RoomDto::from).toList());
     }
 
     @PostMapping("/")
-    public ResponseEntity<Room> createRoom(@RequestBody Room room) {
-        return ResponseEntity.ok(roomService.createNewRoom(room));
+    public ResponseEntity<RoomDto> createRoom(@RequestBody Room room) {
+        return ResponseEntity.ok(RoomDto.from(roomService.createNewRoom(room)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Room> updateRoom(@PathVariable Long id, @RequestBody Room room) {
+    public ResponseEntity<RoomDto> updateRoom(@PathVariable Long id, @RequestBody Room room) {
         if (roomService.findRoomById(id) == null) {
             return ResponseEntity.notFound().build();
         }
         room.setId(id);
-        return ResponseEntity.ok(roomService.updateRoom(room));
+        return ResponseEntity.ok(RoomDto.from(roomService.updateRoom(room)));
     }
 
     @DeleteMapping("/{id}")
