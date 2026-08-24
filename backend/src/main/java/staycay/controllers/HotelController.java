@@ -1,7 +1,6 @@
 package staycay.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import staycay.dto.HotelDto;
+import staycay.dto.PagedResponse;
 import staycay.models.Hotel;
 import staycay.services.HotelService;
 
@@ -25,7 +25,7 @@ public class HotelController {
     private HotelService hotelService;
 
     @GetMapping("/")
-    public ResponseEntity<Page<HotelDto>> getAllHotels(Pageable pageable) {
+    public ResponseEntity<PagedResponse<HotelDto>> getAllHotels(Pageable pageable) {
         return ResponseEntity.ok(hotelService.getAllHotels(pageable).map(HotelDto::from));
     }
 

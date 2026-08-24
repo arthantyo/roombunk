@@ -2,11 +2,11 @@ package staycay.services;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import staycay.dto.PagedResponse;
 import staycay.models.Hotel;
 import staycay.repositories.HotelRepository;
 
@@ -21,8 +21,8 @@ public class HotelService {
     }
 
     @Cacheable(value = "hotels", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort.toString()")
-    public Page<Hotel> getAllHotels(Pageable pageable) {
-        return hotelRepository.findAll(pageable);
+    public PagedResponse<Hotel> getAllHotels(Pageable pageable) {
+        return PagedResponse.from(hotelRepository.findAll(pageable));
     }
 
     @Cacheable(value = "hotelById", key = "#id")

@@ -3,11 +3,10 @@ package staycay.email;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import staycay.models.Reservation;
 import staycay.repositories.ReservationRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @RequiredArgsConstructor
