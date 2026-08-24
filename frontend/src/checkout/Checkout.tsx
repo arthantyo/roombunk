@@ -35,10 +35,50 @@ interface CheckoutState {
   roomId: number;
   checkInDate: string;
   checkOutDate: string;
+  expiresAt?: string;
   hotelName?: string;
   roomType?: string;
   pricePerNight?: number;
   nights?: number;
+}
+
+function HoldTimer({
+  expiresAt,
+  onExpire,
+}: {
+  expiresAt: string;
+  onExpire: () => void;
+}) {
+  const [remainingMs, setRemainingMs] = useState(
+    () => new Date(expiresAt).getTime() - Date.now(),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemainingMs(new Date(expiresAt).getTime() - Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  useEffect(() => {
+    if (remainingMs <= 0) {
+      onExpire();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remainingMs <= 0]);
+
+  const clamped = Math.max(0, remainingMs);
+  const totalSeconds = Math.floor(clamped / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const isLow = totalSeconds <= 60;
+
+  return (
+    <Alert severity={isLow ? "warning" : "info"} sx={{ mb: 3 }}>
+      Your room is held for {minutes}:{seconds.toString().padStart(2, "0")} more
+      minute(s). Complete payment before the hold expires.
+    </Alert>
+  );
 }
 
 function OrderSummary({ state }: { state: CheckoutState }) {
@@ -205,6 +245,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [holdExpired, setHoldExpired] = useState(false);
 
   const state = location.state as CheckoutState | null;
   const isReturning = new URLSearchParams(window.location.search).has(
@@ -248,10 +289,12 @@ export default function Checkout() {
     );
   }
 
-  if (error) {
+  if (error || holdExpired) {
     return (
       <Stack spacing={2}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">
+          {error ?? "Your room hold has expired. Please start over."}
+        </Alert>
         <Button
           variant="outlined"
           onClick={() => navigate(-1)}
@@ -268,6 +311,12 @@ export default function Checkout() {
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>
         Checkout
       </Typography>
+      {state.expiresAt && (
+        <HoldTimer
+          expiresAt={state.expiresAt}
+          onExpire={() => setHoldExpired(true)}
+        />
+      )}
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 5 }}>
           <OrderSummary state={state} />

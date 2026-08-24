@@ -17,8 +17,9 @@ public class OutboxPublisher {
     private final OutboxEventRepository outboxRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 15000)
     public void publishEvents() {
+        System.out.println("Checking for unpublished events...");
 
         List<OutboxEvent> events =
                 outboxRepository

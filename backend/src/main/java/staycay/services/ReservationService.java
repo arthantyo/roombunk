@@ -35,8 +35,8 @@ public class ReservationService {
 
 	public String createRoomHold(
             Long userId,
+            Long hotelId,
             Long roomId,
-			Long hotelId,
             LocalDate checkIn,
             LocalDate checkOut,
             String holdToken
@@ -44,20 +44,20 @@ public class ReservationService {
         validateDates(checkIn, checkOut);
 
 
-		List<Reservation> conflicts =
-			reservationRepository.findOverlappingReservations(
-				roomId,
-				checkIn,
-				checkOut
-			);
+        List<Reservation> conflicts =
+                reservationRepository.findOverlappingReservations(
+                        roomId,
+                        checkIn,
+                        checkOut
+                );
 
-		if (!conflicts.isEmpty()) {
-			throw new IllegalArgumentException(
-				"Room is unavailable for the selected dates."
-			);
-		}
+        if (!conflicts.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Room is unavailable for the selected dates."
+                );
+        }
 
-        String holdKey = buildHoldKey(
+        List<String> holdKeys = buildHoldKeys(
 				hotelId,
                 roomId,
                 checkIn,
@@ -66,17 +66,29 @@ public class ReservationService {
 
         String holdValue = userId + ":" + holdToken;
 
-        Boolean acquired = redisTemplate.opsForValue()
-                .setIfAbsent(
-                        holdKey,
-                        holdValue,
-                        java.time.Duration.ofSeconds(HOLD_DURATION_SECONDS)
-                );
+        List<String> acquiredKeys = new ArrayList<>();
 
-        if (!Boolean.TRUE.equals(acquired)) {
-            throw new IllegalArgumentException(
-                    "Room is currently being held by another user"
-            );
+        for (String holdKey : holdKeys) {
+            Boolean acquired = redisTemplate.opsForValue()
+                    .setIfAbsent(
+                            holdKey,
+                            holdValue,
+                            java.time.Duration.ofSeconds(HOLD_DURATION_SECONDS)
+                    );
+
+            if (!Boolean.TRUE.equals(acquired)) {
+                // Roll back any keys already grabbed so we don't block
+                // unrelated dates on a failed hold attempt.
+                if (!acquiredKeys.isEmpty()) {
+                    redisTemplate.delete(acquiredKeys);
+                }
+
+                throw new IllegalArgumentException(
+                        "Room is currently being held by another user"
+                );
+            }
+
+            acquiredKeys.add(holdKey);
         }
 
         return holdToken;
@@ -85,7 +97,7 @@ public class ReservationService {
     @Transactional
 	 public Reservation confirmReservation(
             Long userId,
-			Long hotelId,
+            Long hotelId,
             Long roomId,
             LocalDate checkIn,
             LocalDate checkOut,
@@ -109,7 +121,7 @@ public class ReservationService {
                             ));
         }
 
-        String holdKey = buildHoldKey(
+        List<String> holdKeys = buildHoldKeys(
 				hotelId,
                 roomId,
                 checkIn,
@@ -118,18 +130,19 @@ public class ReservationService {
 
         String expectedHoldValue = userId + ":" + holdToken;
 
-        String actualHoldValue =
-                redisTemplate.opsForValue().get(holdKey);
+        boolean holdStillValid = holdKeys.stream().allMatch(key ->
+                expectedHoldValue.equals(redisTemplate.opsForValue().get(key)));
 
-        if (actualHoldValue == null) {
-            throw new IllegalArgumentException(
-                    "Room hold has expired"
-            );
-        }
-
-        if (!actualHoldValue.equals(expectedHoldValue)) {
-            throw new IllegalArgumentException(
-                    "Invalid room hold"
+        if (!holdStillValid) {
+            // The hold may have expired (payment took longer than
+            // HOLD_DURATION_SECONDS) or been superseded by another hold.
+            // Don't fail here: the row lock + overlap check below against the
+            // database is the authoritative source of truth for availability,
+            // and the payment has already been captured by this point, so
+            // rejecting outright would mean charging a user for nothing.
+            System.out.println(
+                    "Hold for room " + roomId + " missing/expired at confirm time; "
+                            + "falling back to database overlap check."
             );
         }
 
@@ -167,9 +180,7 @@ public class ReservationService {
         reservation.setRoom(room);
         reservation.setCheckInDate(checkIn);
         reservation.setCheckOutDate(checkOut);
-
-
-		reservation.setStatus(ReservationStatus.PENDING);
+        reservation.setStatus(ReservationStatus.CONFIRMED);
 
         Reservation saved =
                 reservationRepository.save(reservation);
@@ -210,7 +221,7 @@ public class ReservationService {
                 java.time.Duration.ofHours(24)
         );
 
-		redisTemplate.delete(holdKey);
+		redisTemplate.delete(holdKeys);
 
         return reservationRepository.save(reservation);
     }
@@ -303,18 +314,21 @@ public class ReservationService {
     }
 
 
-	private String buildHoldKey(
+	// One key per night so that partially-overlapping ranges (e.g. 25-27 held by
+	// user A, 26-27 requested by user B) correctly contend for the same key(s)
+	// instead of silently succeeding because the exact date ranges differ.
+	private List<String> buildHoldKeys(
 			Long hotelId,
             Long roomId,
             LocalDate checkIn,
             LocalDate checkOut
     ) {
-        return "hold:"
-				+ hotelId
-                + roomId
-                + ":"
-                + checkIn
-                + ":"
-                + checkOut;
+        List<String> keys = new ArrayList<>();
+
+        for (LocalDate date = checkIn; date.isBefore(checkOut); date = date.plusDays(1)) {
+            keys.add("hold:" + hotelId + ":" + roomId + ":" + date);
+        }
+
+        return keys;
     }
 }

@@ -92,6 +92,7 @@ export default function Hotel() {
           roomId: hold.roomId,
           checkInDate: hold.checkInDate,
           checkOutDate: hold.checkOutDate,
+          expiresAt: hold.expiresAt,
           hotelName: hotel?.name,
           roomType: room.roomType,
           pricePerNight: room.pricePerNight,
