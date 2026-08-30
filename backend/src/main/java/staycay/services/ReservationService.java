@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -25,6 +27,7 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class ReservationService {
 	private static final long HOLD_DURATION_SECONDS = 15 * 60; // 15 minutes
+	private static final int MAX_ACTIVE_HOLDS_PER_USER = 4;
 
 	private final ReservationRepository reservationRepository;
         private final RoomRepository roomRepository;
@@ -32,6 +35,11 @@ public class ReservationService {
 	private final StringRedisTemplate redisTemplate;
 	private final OutboxEventRepository outboxEventRepository;
         private final ObjectMapper objectMapper;
+
+	private final RedisScript<Long> createRoomHoldScript = RedisScript.of(
+			new ClassPathResource("scripts/create_room_hold.lua"),
+			Long.class
+	);
 
 	public String createRoomHold(
             Long userId,
@@ -66,29 +74,39 @@ public class ReservationService {
 
         String holdValue = userId + ":" + holdToken;
 
-        List<String> acquiredKeys = new ArrayList<>();
+        List<String> scriptKeys = new ArrayList<>();
+        scriptKeys.add(buildUserHoldsKey(userId));
+        scriptKeys.addAll(holdKeys);
 
-        for (String holdKey : holdKeys) {
-            Boolean acquired = redisTemplate.opsForValue()
-                    .setIfAbsent(
-                            holdKey,
-                            holdValue,
-                            java.time.Duration.ofSeconds(HOLD_DURATION_SECONDS)
-                    );
+        long now = java.time.Instant.now().getEpochSecond();
+        long expiry = now + HOLD_DURATION_SECONDS;
 
-            if (!Boolean.TRUE.equals(acquired)) {
-                // Roll back any keys already grabbed so we don't block
-                // unrelated dates on a failed hold attempt.
-                if (!acquiredKeys.isEmpty()) {
-                    redisTemplate.delete(acquiredKeys);
-                }
+        Long result = redisTemplate.execute(
+                createRoomHoldScript,
+                scriptKeys,
+                String.valueOf(now),
+                String.valueOf(expiry),
+                String.valueOf(MAX_ACTIVE_HOLDS_PER_USER),
+                holdValue,
+                holdToken,
+                String.valueOf(HOLD_DURATION_SECONDS)
+        );
 
-                throw new IllegalArgumentException(
-                        "Room is currently being held by another user"
-                );
-            }
+        if (result == null) {
+            throw new IllegalStateException("Failed to acquire room hold");
+        }
 
-            acquiredKeys.add(holdKey);
+        if (result == -2L) {
+            throw new IllegalArgumentException(
+                    "You already have " + MAX_ACTIVE_HOLDS_PER_USER
+                            + " active room holds. Complete or let one expire before holding another room."
+            );
+        }
+
+        if (result != 1L) {
+            throw new IllegalArgumentException(
+                    "Room is currently being held by another user"
+            );
         }
 
         return holdToken;
@@ -128,23 +146,6 @@ public class ReservationService {
                 checkOut
         );
 
-        String expectedHoldValue = userId + ":" + holdToken;
-
-        boolean holdStillValid = holdKeys.stream().allMatch(key ->
-                expectedHoldValue.equals(redisTemplate.opsForValue().get(key)));
-
-        if (!holdStillValid) {
-            // The hold may have expired (payment took longer than
-            // HOLD_DURATION_SECONDS) or been superseded by another hold.
-            // Don't fail here: the row lock + overlap check below against the
-            // database is the authoritative source of truth for availability,
-            // and the payment has already been captured by this point, so
-            // rejecting outright would mean charging a user for nothing.
-            System.out.println(
-                    "Hold for room " + roomId + " missing/expired at confirm time; "
-                            + "falling back to database overlap check."
-            );
-        }
 
         Room room = roomRepository.findRoomByIdForUpdate(roomId);
 
@@ -222,6 +223,7 @@ public class ReservationService {
         );
 
 		redisTemplate.delete(holdKeys);
+		redisTemplate.opsForZSet().remove(buildUserHoldsKey(userId), holdToken);
 
         return reservationRepository.save(reservation);
     }
@@ -331,4 +333,8 @@ public class ReservationService {
 
         return keys;
     }
+
+	private String buildUserHoldsKey(Long userId) {
+		return "user_holds:" + userId;
+	}
 }

@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,6 +41,7 @@ import staycay.repositories.UserRepository;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final UserRepository userRepository;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -55,7 +57,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/stripe/webhook").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(
-                        jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+                        jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

@@ -33,11 +33,13 @@ export default function Login() {
         (location.state as { from?: Location })?.from?.pathname ?? "/";
       navigate(from, { replace: true });
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? "Invalid email or password."
-          : "Something went wrong.",
-      );
+      if (err instanceof ApiError) {
+        setError(
+          err.status === 401 ? "Invalid email or password." : err.message,
+        );
+      } else {
+        setError("Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }

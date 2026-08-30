@@ -36,7 +36,34 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new ApiError(text || response.statusText, response.status);
+    let message = response.statusText;
+
+    if (text) {
+      try {
+        const json = JSON.parse(text);
+        if (typeof json.message === "string" && json.message.trim()) {
+          message = json.message;
+        } else if (typeof json.error === "string" && json.error.trim()) {
+          message = json.error;
+        } else {
+          message = text;
+        }
+      } catch {
+        message = text;
+      }
+    }
+
+    if (response.status === 429) {
+      if (
+        !message ||
+        message === response.statusText ||
+        message === "Too Many Requests"
+      ) {
+        message = "Too many requests. Please slow down and try again later.";
+      }
+    }
+
+    throw new ApiError(message, response.status);
   }
 
   if (response.status === 204) {

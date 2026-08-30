@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import { getMyReservations } from "../api/reservations";
+import { ApiError } from "../api/client";
 import type { ReservationStatus } from "../api/types";
 
 const statusColor: Record<
@@ -24,7 +25,7 @@ const statusColor: Record<
 };
 
 export default function Reservations() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["myReservations"],
     queryFn: getMyReservations,
   });
@@ -36,7 +37,11 @@ export default function Reservations() {
       </Typography>
 
       {isError && (
-        <Alert severity="error">Unable to load your reservations.</Alert>
+        <Alert severity="error">
+          {error instanceof ApiError
+            ? error.message
+            : "Unable to load your reservations."}
+        </Alert>
       )}
 
       {isLoading && (

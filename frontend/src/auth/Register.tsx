@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useAuth } from "./AuthContext";
+import { ApiError } from "../api/client";
 
 export default function Register() {
   const { register } = useAuth();
@@ -29,9 +30,11 @@ export default function Register() {
     try {
       await register(username, email, password);
       navigate("/", { replace: true });
-    } catch {
+    } catch (err) {
       setError(
-        "Could not create account. Please check your details and try again.",
+        err instanceof ApiError
+          ? err.message
+          : "Could not create account. Please check your details and try again.",
       );
     } finally {
       setLoading(false);

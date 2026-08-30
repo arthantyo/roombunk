@@ -22,6 +22,7 @@ import { getHotelById } from "../api/hotels";
 import { getRoomsByHotelId } from "../api/rooms";
 import { createHold } from "../api/reservations";
 import { useAuth } from "../auth/AuthContext";
+import { ApiError } from "../api/client";
 import type { RoomDto } from "../api/types";
 
 function todayIso() {
@@ -99,9 +100,11 @@ export default function Hotel() {
           nights,
         },
       });
-    } catch {
+    } catch (err) {
       setBookingError(
-        "This room is unavailable for the selected dates. Please try different dates.",
+        err instanceof ApiError
+          ? err.message
+          : "This room is unavailable for the selected dates. Please try different dates.",
       );
     } finally {
       setIsBooking(false);

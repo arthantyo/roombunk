@@ -19,6 +19,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { getHotels } from "../api/hotels";
+import { ApiError } from "../api/client";
 
 const PAGE_SIZE = 9;
 
@@ -26,7 +27,7 @@ export default function Home() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["hotels", page],
     queryFn: () => getHotels(page, PAGE_SIZE),
   });
@@ -72,7 +73,9 @@ export default function Home() {
 
       {isError && (
         <Alert severity="error">
-          Unable to load hotels. Please try again later.
+          {error instanceof ApiError
+            ? error.message
+            : "Unable to load hotels. Please try again later."}
         </Alert>
       )}
 

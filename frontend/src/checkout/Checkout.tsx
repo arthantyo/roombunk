@@ -21,6 +21,7 @@ import {
   Typography,
 } from "@mui/material";
 import { createPaymentIntent } from "../api/payments";
+import { ApiError } from "../api/client";
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as
   | string
@@ -263,8 +264,12 @@ export default function Checkout() {
       holdToken: state.holdToken,
     })
       .then((res) => setClientSecret(res.clientSecret))
-      .catch(() =>
-        setError("Unable to start checkout. Your room hold may have expired."),
+      .catch((err) =>
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Unable to start checkout. Your room hold may have expired.",
+        ),
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReturning]);
