@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -100,7 +100,8 @@ function HotelCard({ hotel }: { hotel: any }) {
 
 export default function Home() {
   const [page, setPage] = useState(0);
-  const [search] = useState("");
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("destination") ?? "";
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["hotels", page],

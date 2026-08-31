@@ -9,8 +9,10 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Container,
   IconButton,
+  InputBase,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -26,14 +28,28 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HotelIcon from "@mui/icons-material/Hotel";
 import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
+import dayjs from "dayjs";
 import { useAuth } from "../auth/AuthContext";
 import { useState } from "react";
+import DatePickerPopover from "./search/DatePickerPopover";
+import GuestPickerPopover from "./search/GuestPickerPopover";
 
 export default function Layout() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [accountAnchor, setAccountAnchor] = useState<null | HTMLElement>(null);
+  const [destination, setDestination] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [guests, setGuests] = useState(1);
+  const [rooms, setRooms] = useState(1);
+  const [pets, setPets] = useState(false);
+  const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLElement | null>(
+    null,
+  );
+  const [guestPickerAnchor, setGuestPickerAnchor] =
+    useState<HTMLElement | null>(null);
   const isHomePage = location.pathname === "/";
 
   const openAccountMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -49,6 +65,26 @@ export default function Layout() {
     closeAccountMenu();
     navigate("/");
   }
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const searchParams = new URLSearchParams();
+
+    if (destination.trim()) searchParams.set("destination", destination.trim());
+    if (checkIn) searchParams.set("checkIn", checkIn);
+    if (checkOut) searchParams.set("checkOut", checkOut);
+    if (guests > 1) searchParams.set("guests", String(guests));
+    if (rooms > 1) searchParams.set("rooms", String(rooms));
+    if (pets) searchParams.set("pets", "true");
+
+    navigate({ pathname: "/", search: searchParams.toString() });
+  }
+
+  const dateSummary =
+    checkIn && checkOut
+      ? `${dayjs(checkIn).format("MMM D")} - ${dayjs(checkOut).format("MMM D")}`
+      : "Add dates";
+  const guestSummary = `${guests} ${guests === 1 ? "guest" : "guests"}, ${rooms} ${rooms === 1 ? "room" : "rooms"}${pets ? ", pets" : ""}`;
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f7f7f5" }}>
@@ -197,11 +233,13 @@ export default function Layout() {
           }}
         >
           <Box
+            component="form"
+            onSubmit={handleSearch}
             sx={{
               maxWidth: 1160,
               mx: "auto",
-              mt: 4,
-              borderRadius: 999,
+              mt: { xs: 2, md: 4 },
+              borderRadius: { xs: 2, lg: 999 },
               border: "1px solid #e2e1df",
               background: "rgba(255,255,255,0.72)",
               boxShadow: "0 12px 30px rgba(0,0,0,0.05)",
@@ -213,55 +251,129 @@ export default function Layout() {
               direction={{ xs: "column", lg: "row" }}
               sx={{ alignItems: "stretch" }}
             >
-              {[
-                { label: "Where", placeholder: "Search destinations" },
-                { label: "When", placeholder: "Add dates" },
-                { label: "Who", placeholder: "Add guests" },
-              ].map((field) => (
-                <Box
-                  key={field.label}
+              <Box
+                sx={{
+                  flex: 1,
+                  borderBottom: { xs: "1px solid #ebebeb", lg: "none" },
+                  borderRight: { lg: "1px solid #ebebeb" },
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1.5, md: 2 },
+                  minHeight: 72,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  variant="caption"
                   sx={{
-                    flex: 1,
-                    borderRight: { lg: "1px solid #ebebeb" },
-                    px: { xs: 2, md: 3 },
-                    py: { xs: 1.5, md: 1.8 },
-                    minHeight: 72,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
+                    fontWeight: 700,
+                    color: "#222222",
+                    mb: 0.45,
+                    pt: { xs: 0.25, md: 0.5 },
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: 700, color: "#222222", mb: 0.35 }}
-                  >
-                    {field.label}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ opacity: 0.8 }}
-                  >
-                    {field.placeholder}
-                  </Typography>
-                </Box>
-              ))}
+                  Where
+                </Typography>
+                <InputBase
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value)}
+                  placeholder="Search destinations"
+                  inputProps={{ "aria-label": "Destination" }}
+                  sx={{
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                    width: "100%",
+                    padding: 0,
+                  }}
+                />
+              </Box>
+              <Box
+                sx={{
+                  flex: 1,
+                  borderBottom: { xs: "1px solid #ebebeb", lg: "none" },
+                  borderRight: { lg: "1px solid #ebebeb" },
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1.5, md: 1.8 },
+                  minHeight: 72,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, color: "#222222", mb: 0.35 }}
+                >
+                  When
+                </Typography>
+                <ButtonBase
+                  onClick={(event) => setDatePickerAnchor(event.currentTarget)}
+                  aria-haspopup="dialog"
+                  aria-expanded={Boolean(datePickerAnchor)}
+                  sx={{
+                    alignSelf: "stretch",
+                    color: "text.secondary",
+                    fontSize: "0.875rem",
+                    justifyContent: "flex-start",
+                    textAlign: "left",
+                  }}
+                >
+                  {dateSummary}
+                </ButtonBase>
+              </Box>
+              <Box
+                sx={{
+                  flex: 1,
+                  borderBottom: { xs: "1px solid #ebebeb", lg: "none" },
+                  borderRight: { lg: "1px solid #ebebeb" },
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1.5, md: 1.8 },
+                  minHeight: 72,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, color: "#222222", mb: 0.35 }}
+                >
+                  Who
+                </Typography>
+                <ButtonBase
+                  onClick={(event) => setGuestPickerAnchor(event.currentTarget)}
+                  aria-haspopup="dialog"
+                  aria-expanded={Boolean(guestPickerAnchor)}
+                  sx={{
+                    alignSelf: "stretch",
+                    color: "text.secondary",
+                    fontSize: "0.875rem",
+                    justifyContent: "flex-start",
+                    textAlign: "left",
+                  }}
+                >
+                  {guestSummary}
+                </ButtonBase>
+              </Box>
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  px: 1.5,
-                  py: 1.5,
+                  px: { xs: 2, lg: 1.5 },
+                  py: { xs: 1.25, lg: 1.5 },
                 }}
               >
                 <IconButton
+                  type="submit"
+                  aria-label="Search stays"
                   sx={{
-                    width: 52,
+                    width: { xs: "100%", lg: 52 },
                     height: 52,
                     background: "#0f6f5c",
                     color: "#fff",
-                    borderRadius: "50%",
+                    borderRadius: { xs: 1, lg: "50%" },
                     ":hover": {
                       background: "#0f6f5c",
                     },
@@ -272,6 +384,24 @@ export default function Layout() {
               </Box>
             </Stack>
           </Box>
+          <DatePickerPopover
+            anchorEl={datePickerAnchor}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onCheckInChange={setCheckIn}
+            onCheckOutChange={setCheckOut}
+            onClose={() => setDatePickerAnchor(null)}
+          />
+          <GuestPickerPopover
+            anchorEl={guestPickerAnchor}
+            guests={guests}
+            rooms={rooms}
+            pets={pets}
+            onGuestsChange={setGuests}
+            onRoomsChange={setRooms}
+            onPetsChange={setPets}
+            onClose={() => setGuestPickerAnchor(null)}
+          />
         </Container>
       )}
 

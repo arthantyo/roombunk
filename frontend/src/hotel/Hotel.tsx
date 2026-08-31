@@ -385,7 +385,7 @@ export default function Hotel() {
                                 sx={{ fontSize: 18, color: "#4e4e4e" }}
                               />
                               <Typography sx={{ color: "#4c4c4c" }}>
-                                Sleeps {room.capacity}
+                                {room.capacity} Guests
                               </Typography>
                             </Box>
                           </Box>
