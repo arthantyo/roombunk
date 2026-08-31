@@ -5,27 +5,102 @@ import {
   Alert,
   Box,
   Card,
-  CardActionArea,
-  CardContent,
-  Chip,
-  Grid,
-  InputAdornment,
+  CardMedia,
   Pagination,
   Skeleton,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { getHotels } from "../api/hotels";
 import { ApiError } from "../api/client";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 8;
+
+function getHotelImage() {
+  return "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80";
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mb: 2.5,
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: 700,
+          fontSize: { xs: "1.4rem", md: "1.6rem" },
+          letterSpacing: -0.8,
+        }}
+      >
+        {title}
+      </Typography>
+    </Box>
+  );
+}
+
+function HotelCard({ hotel }: { hotel: any }) {
+  return (
+    <Card
+      component={RouterLink}
+      to={`/hotels/${hotel.id}`}
+      sx={{
+        minWidth: 236,
+        width: 236,
+        background: "transparent",
+        boxShadow: "none",
+        border: "none",
+        textDecoration: "none",
+        flexShrink: 0,
+        color: "inherit",
+      }}
+    >
+      <Box sx={{ position: "relative" }}>
+        <CardMedia
+          component="img"
+          image={getHotelImage()}
+          alt={hotel.name}
+          sx={{ height: 250, borderRadius: 4, objectFit: "cover" }}
+        />
+        {/* <IconButton
+          aria-label="favorite"
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            background: "rgba(255,255,255,0.85)",
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            ":hover": { background: "rgba(255,255,255,0.95)" },
+          }}
+        >
+          <FavoriteBorderIcon fontSize="small" sx={{ color: "#1d1d1d" }} />
+        </IconButton> */}
+      </Box>
+      <Box sx={{ mt: 1.2, px: 0.5 }}>
+        <Typography variant="body1" sx={{ fontWeight: 600, lineHeight: 1.35 }}>
+          {hotel.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.2 }}>
+          {hotel.city}, {hotel.country}
+        </Typography>
+        {/* <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 500 }}>
+          {formattedPrice}
+        </Typography> */}
+      </Box>
+    </Card>
+  );
+}
 
 export default function Home() {
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
+  const [search] = useState("");
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["hotels", page],
@@ -37,107 +112,54 @@ export default function Home() {
     if (!search.trim()) return hotels;
     const term = search.toLowerCase();
     return hotels.filter(
-      (h) =>
-        h.name.toLowerCase().includes(term) ||
-        h.city.toLowerCase().includes(term),
+      (hotel: any) =>
+        hotel.name.toLowerCase().includes(term) ||
+        hotel.city.toLowerCase().includes(term) ||
+        hotel.country.toLowerCase().includes(term),
     );
   }, [data, search]);
 
   return (
-    <Box>
-      <Stack spacing={1} sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Explore stays
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Find your next getaway from our curated collection of hotels.
-        </Typography>
-      </Stack>
+    <Box sx={{ py: 2 }}>
+      <Box sx={{ mb: 4 }}>
+        <SectionHeader title="Our stays" />
+        <Box
+          sx={{
+            overflowX: "auto",
+            pb: 1,
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          <Stack direction="row" spacing={2.2} sx={{ minWidth: "max-content" }}>
+            {isLoading &&
+              Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  variant="rounded"
+                  width={236}
+                  height={320}
+                  sx={{ borderRadius: 4 }}
+                />
+              ))}
 
-      <TextField
-        fullWidth
-        placeholder="Search by hotel name or city"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 4, maxWidth: 480 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+            {!isLoading &&
+              filteredHotels.map((hotel: any) => (
+                <HotelCard key={hotel.id} hotel={hotel} />
+              ))}
+          </Stack>
+        </Box>
+      </Box>
 
       {isError && (
-        <Alert severity="error">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {error instanceof ApiError
             ? error.message
             : "Unable to load hotels. Please try again later."}
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        {isLoading &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Skeleton variant="rounded" height={180} />
-            </Grid>
-          ))}
-
-        {!isLoading &&
-          filteredHotels.map((hotel) => (
-            <Grid key={hotel.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card elevation={2}>
-                <CardActionArea
-                  component={RouterLink}
-                  to={`/hotels/${hotel.id}`}
-                >
-                  <Box
-                    sx={{
-                      height: 140,
-                      background:
-                        "linear-gradient(135deg, #0f6f5c 0%, #1b9c81 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h5"
-                      color="white"
-                      sx={{ px: 2, textAlign: "center", fontWeight: 700 }}
-                    >
-                      {hotel.name}
-                    </Typography>
-                  </Box>
-                  <CardContent>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      sx={{ mb: 1, alignItems: "center" }}
-                    >
-                      <LocationOnIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {hotel.city}, {hotel.state}, {hotel.country}
-                      </Typography>
-                    </Stack>
-                    <Chip
-                      label={hotel.address}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            </Grid>
-          ))}
-      </Grid>
-
       {!isLoading && filteredHotels.length === 0 && (
-        <Typography sx={{ mt: 4 }} color="text.secondary">
+        <Typography sx={{ mt: 2 }} color="text.secondary">
           No hotels match your search.
         </Typography>
       )}
