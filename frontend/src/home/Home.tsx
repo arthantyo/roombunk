@@ -49,8 +49,8 @@ function HotelCard({ hotel }: { hotel: HotelDto }) {
       component={RouterLink}
       to={`/hotels/${hotel.id}`}
       sx={{
-        minWidth: 236,
-        width: 236,
+        minWidth: 0,
+        width: "100%",
         background: "transparent",
         boxShadow: "none",
         border: "none",
@@ -64,7 +64,12 @@ function HotelCard({ hotel }: { hotel: HotelDto }) {
           component="img"
           image={getHotelImage()}
           alt={hotel.name}
-          sx={{ height: 250, borderRadius: 4, objectFit: "cover" }}
+          sx={{
+            width: "100%",
+            aspectRatio: "0.944",
+            borderRadius: 4,
+            objectFit: "cover",
+          }}
         />
         {/* <IconButton
           aria-label="favorite"
@@ -97,6 +102,22 @@ function HotelCard({ hotel }: { hotel: HotelDto }) {
   );
 }
 
+function HotelCardSkeleton() {
+  return (
+    <Box sx={{ minWidth: 0, width: "100%" }}>
+      <Skeleton
+        height={240}
+        variant="rounded"
+        sx={{ width: "100%", aspectRatio: "0.944", borderRadius: 4 }}
+      />
+      <Box sx={{ mt: 1.2, px: 0.5 }}>
+        <Skeleton variant="text" width="78%" height={24} />
+        <Skeleton variant="text" width="58%" height={21} />
+      </Box>
+    </Box>
+  );
+}
+
 export default function Home() {
   const [page, setPage] = useState(0);
   const [searchParams] = useSearchParams();
@@ -125,28 +146,25 @@ export default function Home() {
         <SectionHeader title="Our stays" />
         <Box
           sx={{
-            overflowX: "auto",
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "repeat(2, minmax(0, 1fr))",
+              sm: "repeat(3, minmax(0, 1fr))",
+              md: "repeat(6, minmax(0, 1fr))",
+            },
+            gap: { xs: 1.5, sm: 2, md: 2.2 },
             pb: 1,
-            "&::-webkit-scrollbar": { display: "none" },
           }}
         >
-          <Stack direction="row" spacing={2.2} sx={{ minWidth: "max-content" }}>
-            {isLoading &&
-              Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rounded"
-                  width={236}
-                  height={320}
-                  sx={{ borderRadius: 4 }}
-                />
-              ))}
+          {isLoading &&
+            Array.from({ length: 6 }).map((_, index) => (
+              <HotelCardSkeleton key={index} />
+            ))}
 
-            {!isLoading &&
-              filteredHotels.map((hotel: HotelDto) => (
-                <HotelCard key={hotel.id} hotel={hotel} />
-              ))}
-          </Stack>
+          {!isLoading &&
+            filteredHotels.map((hotel: HotelDto) => (
+              <HotelCard key={hotel.id} hotel={hotel} />
+            ))}
         </Box>
       </Box>
 

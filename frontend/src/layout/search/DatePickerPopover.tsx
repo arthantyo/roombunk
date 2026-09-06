@@ -130,8 +130,8 @@ export default function DatePickerPopover({
             : "Choose your check-out date"}
         </Typography>
         <DateCalendar
-          disableHighlightToday={true}
-          disablePast={true}
+          disableHighlightToday
+          disablePast
           value={null}
           onChange={(date) => {
             if (date) selectDate(date.format("YYYY-MM-DD"));
@@ -139,10 +139,38 @@ export default function DatePickerPopover({
           slots={{ day: RangeDay }}
           sx={{
             width: "100%",
-            fontSize: { xs: "0.875rem", sm: "1rem" },
+            height: "100%",
+            maxHeight: "none",
             mt: 1,
+
+            "& .MuiPickersCalendarHeader-root": {
+              px: 2,
+            },
+
             "& .MuiPickersCalendarHeader-label": {
-              fontSize: { xs: "0.875rem", sm: "1rem" },
+              fontSize: "1.1rem",
+              fontWeight: 600,
+            },
+
+            "& .MuiDayCalendar-weekDayLabel": {
+              width: 44,
+              height: 44,
+              fontSize: "0.95rem",
+            },
+
+            "& .MuiPickersDay-root": {
+              width: 44,
+              height: 44,
+              fontSize: "1rem",
+            },
+
+            "& .MuiDayCalendar-weekContainer": {
+              justifyContent: "space-around",
+              marginBottom: "0.6rem",
+            },
+
+            "& .MuiDayCalendar-header": {
+              justifyContent: "space-around",
             },
           }}
         />
