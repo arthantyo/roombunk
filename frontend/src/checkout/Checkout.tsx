@@ -176,17 +176,19 @@ function PaymentForm({ state }: { state: CheckoutState }) {
 function PaymentStatus() {
   const [status, setStatus] = useState<
     "loading" | "succeeded" | "processing" | "failed"
-  >("loading");
+  >(() => {
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      "payment_intent_client_secret",
+    );
+    return clientSecret && stripePromise ? "loading" : "failed";
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     const clientSecret = new URLSearchParams(window.location.search).get(
       "payment_intent_client_secret",
     );
-    if (!clientSecret || !stripePromise) {
-      setStatus("failed");
-      return;
-    }
+    if (!clientSecret || !stripePromise) return;
 
     stripePromise.then((stripe) => {
       if (!stripe) {

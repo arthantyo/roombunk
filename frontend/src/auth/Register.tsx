@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import { ApiError } from "../api/client";
 
 export default function Register() {

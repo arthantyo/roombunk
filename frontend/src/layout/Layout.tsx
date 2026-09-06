@@ -29,7 +29,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import HotelIcon from "@mui/icons-material/Hotel";
 import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
 import dayjs from "dayjs";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import { useState } from "react";
 import DatePickerPopover from "./search/DatePickerPopover";
 import GuestPickerPopover from "./search/GuestPickerPopover";

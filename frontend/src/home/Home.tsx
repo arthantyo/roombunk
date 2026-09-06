@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { getHotels } from "../api/hotels";
 import { ApiError } from "../api/client";
+import type { HotelDto } from "../api/types";
 
 const PAGE_SIZE = 8;
 
@@ -44,7 +45,7 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-function HotelCard({ hotel }: { hotel: any }) {
+function HotelCard({ hotel }: { hotel: HotelDto }) {
   return (
     <Card
       component={RouterLink}
@@ -113,7 +114,7 @@ export default function Home() {
     if (!search.trim()) return hotels;
     const term = search.toLowerCase();
     return hotels.filter(
-      (hotel: any) =>
+      (hotel: HotelDto) =>
         hotel.name.toLowerCase().includes(term) ||
         hotel.city.toLowerCase().includes(term) ||
         hotel.country.toLowerCase().includes(term),
@@ -144,7 +145,7 @@ export default function Home() {
               ))}
 
             {!isLoading &&
-              filteredHotels.map((hotel: any) => (
+              filteredHotels.map((hotel: HotelDto) => (
                 <HotelCard key={hotel.id} hotel={hotel} />
               ))}
           </Stack>

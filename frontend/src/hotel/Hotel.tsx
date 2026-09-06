@@ -13,12 +13,11 @@ import {
 } from "@mui/material";
 import BookmarksOutlinedIcon from "@mui/icons-material/BookmarksOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
-import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { getHotelById } from "../api/hotels";
 import { getRoomsByHotelId } from "../api/rooms";
 import { createHold } from "../api/reservations";
 import { ApiError } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import type { RoomDto } from "../api/types";
 
 function todayIso() {
