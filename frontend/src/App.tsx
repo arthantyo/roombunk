@@ -30,6 +30,7 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/reservations" element={<Reservations />} />
               </Route>
+              <Route path="*" element={<PageNotFound />} />
             </Route>
           </Routes>
         </AuthProvider>
@@ -38,4 +39,12 @@ function App() {
   );
 }
 
+const PageNotFound = () => {
+  return (
+    <div>
+      <h2>404 Error</h2>
+      <p>Oops! The page you're looking for does not exist.</p>
+    </div>
+  );
+};
 export default App;

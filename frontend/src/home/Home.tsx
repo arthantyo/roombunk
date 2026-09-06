@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import {
-  Alert,
   Box,
   Card,
   CardMedia,
@@ -12,7 +11,6 @@ import {
   Typography,
 } from "@mui/material";
 import { getHotels } from "../api/hotels";
-import { ApiError } from "../api/client";
 import type { HotelDto } from "../api/types";
 
 const PAGE_SIZE = 8;
@@ -35,7 +33,7 @@ function SectionHeader({ title }: { title: string }) {
         variant="h4"
         sx={{
           fontWeight: 700,
-          fontSize: { xs: "1.4rem", md: "1.6rem" },
+          fontSize: { xs: "1.2rem", md: "1.4rem" },
           letterSpacing: -0.8,
         }}
       >
@@ -104,7 +102,7 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const search = searchParams.get("destination") ?? "";
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["hotels", page],
     queryFn: () => getHotels(page, PAGE_SIZE),
   });
@@ -123,7 +121,7 @@ export default function Home() {
 
   return (
     <Box sx={{ py: 2 }}>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, px: { xs: 1, md: 3 } }}>
         <SectionHeader title="Our stays" />
         <Box
           sx={{
@@ -152,18 +150,53 @@ export default function Home() {
         </Box>
       </Box>
 
-      {isError && (
+      {/* {isError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {error instanceof ApiError
             ? error.message
             : "Unable to load hotels. Please try again later."}
         </Alert>
-      )}
+      )} */}
 
       {!isLoading && filteredHotels.length === 0 && (
-        <Typography sx={{ mt: 2 }} color="text.secondary">
-          No hotels match your search.
-        </Typography>
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            component="img"
+            src="/images/no-hotels.png"
+            alt="No hotels found"
+            sx={{
+              display: "block",
+              width: "100%",
+              maxWidth: "500px",
+              height: "auto",
+              mx: "auto",
+            }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: { xs: "1.25rem", sm: "1.5rem" },
+              mt: 2,
+              textAlign: "center",
+              fontWeight: 600,
+            }}
+          >
+            No results found
+          </Typography>
+          <Typography
+            sx={{
+              mt: 1,
+              textAlign: "center",
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+              maxWidth: "400px",
+              mx: "auto",
+            }}
+            color="text.secondary"
+          >
+            We couldn't find any hotels matching your search. Please try a
+            different destination or check back later.
+          </Typography>
+        </Box>
       )}
 
       {data && data.totalPages > 1 && (

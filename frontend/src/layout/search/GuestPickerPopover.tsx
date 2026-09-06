@@ -2,12 +2,14 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import {
   Button,
+  Drawer,
   IconButton,
   Popover,
   Stack,
   Switch,
   Typography,
 } from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 type GuestPickerPopoverProps = {
   anchorEl: HTMLElement | null;
@@ -82,13 +84,63 @@ export default function GuestPickerPopover({
   onPetsChange,
   onClose,
 }: GuestPickerPopoverProps) {
+  const isMobile = useMediaQuery("(max-width:599.95px)");
+  const content = (
+    <Stack spacing={2}>
+      <CounterRow label="Guests" value={guests} onChange={onGuestsChange} />
+      <CounterRow label="Rooms" value={rooms} onChange={onRoomsChange} />
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          pt: 1,
+          borderTop: "1px solid #e4e4e4",
+        }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          Pets
+        </Typography>
+        <Switch
+          checked={pets}
+          onChange={(event) => onPetsChange(event.target.checked)}
+          slotProps={{ input: { "aria-label": "Traveling with pets" } }}
+        />
+      </Stack>
+      <Button type="button" variant="outlined" onClick={onClose}>
+        Done
+      </Button>
+    </Stack>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        anchor="bottom"
+        open={Boolean(anchorEl)}
+        onClose={onClose}
+        slotProps={{
+          paper: {
+            sx: {
+              p: 2.5,
+              width: "100%",
+              borderRadius: "16px 16px 0 0",
+            },
+          },
+        }}
+      >
+        {content}
+      </Drawer>
+    );
+  }
+
   return (
     <Popover
       open={Boolean(anchorEl)}
       anchorEl={anchorEl}
       onClose={onClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      transformOrigin={{ vertical: "top", horizontal: "center" }}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      transformOrigin={{ vertical: "top", horizontal: "right" }}
       slotProps={{
         paper: {
           sx: {
@@ -102,31 +154,7 @@ export default function GuestPickerPopover({
         },
       }}
     >
-      <Stack spacing={2}>
-        <CounterRow label="Guests" value={guests} onChange={onGuestsChange} />
-        <CounterRow label="Rooms" value={rooms} onChange={onRoomsChange} />
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            pt: 1,
-            borderTop: "1px solid #e4e4e4",
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Pets
-          </Typography>
-          <Switch
-            checked={pets}
-            onChange={(event) => onPetsChange(event.target.checked)}
-            slotProps={{ input: { "aria-label": "Traveling with pets" } }}
-          />
-        </Stack>
-        <Button type="button" variant="outlined" onClick={onClose}>
-          Done
-        </Button>
-      </Stack>
+      {content}
     </Popover>
   );
 }

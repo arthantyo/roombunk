@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap");
+
 html,
 body,
 #root {
@@ -7,7 +9,7 @@ body,
 }
 
 body {
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "Rubik", sans-serif;
   color: #222222;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

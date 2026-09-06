@@ -17,7 +17,7 @@ const theme = createTheme({
     borderRadius: 12,
   },
   typography: {
-    fontFamily: ['"Inter"', "system-ui", "sans-serif"].join(","),
+    fontFamily: ['"Rubik"', "system-ui", "sans-serif"].join(","),
   },
 });
 

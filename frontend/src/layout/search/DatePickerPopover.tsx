@@ -1,9 +1,12 @@
-import { Box, ButtonBase, Popover, Stack, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { Box, Drawer, IconButton, Popover, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { PickerDay, type PickerDayProps } from "@mui/x-date-pickers/PickerDay";
 import dayjs from "dayjs";
 import { useState } from "react";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 type DatePickerPopoverProps = {
   anchorEl: HTMLElement | null;
@@ -22,13 +25,163 @@ export default function DatePickerPopover({
   onCheckOutChange,
   onClose,
 }: DatePickerPopoverProps) {
+  const isMobile = useMediaQuery("(max-width:599.95px)");
   const [activeDate, setActiveDate] = useState<"checkIn" | "checkOut">(
     "checkIn",
   );
 
-  function selectCheckIn(value: string) {
-    onCheckInChange(value);
-    if (checkOut && value > checkOut) onCheckOutChange("");
+  function selectDate(value: string) {
+    if (activeDate === "checkIn" || !checkIn || checkOut) {
+      onCheckInChange(value);
+      onCheckOutChange("");
+      setActiveDate("checkOut");
+      return;
+    }
+
+    if (value < checkIn) {
+      onCheckInChange(value);
+      return;
+    }
+
+    onCheckOutChange(value);
+    setActiveDate("checkIn");
+  }
+
+  function RangeDay(props: PickerDayProps) {
+    const date = props.day.format("YYYY-MM-DD");
+    const isCheckIn = date === checkIn;
+    const isCheckOut = date === checkOut;
+    const isInRange = Boolean(
+      checkIn && checkOut && date > checkIn && date < checkOut,
+    );
+
+    return (
+      <PickerDay
+        {...props}
+        selected={false}
+        sx={{
+          fontSize: { xs: "0.875rem", sm: "1rem" },
+
+          outline: props.today ? "2px solid #0f6f5c" : "none",
+          borderRadius: "50%",
+          bgcolor: isInRange ? "#dcefe9" : "transparent",
+          color: isInRange ? "#075545" : "inherit",
+
+          "&:hover, &:focus": {
+            bgcolor: isCheckIn || isCheckOut ? "#0b5d4d" : "#dcefe9",
+          },
+
+          ...(isCheckIn || isCheckOut
+            ? {
+                bgcolor: "#0f6f5c",
+                color: "#ffffff",
+                fontWeight: 700,
+                "&:hover, &:focus": {
+                  bgcolor: "#0b5d4d",
+                },
+              }
+            : {}),
+        }}
+      />
+    );
+  }
+
+  const content = (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 1,
+            px: 1.5,
+            pt: 0.75,
+          }}
+        >
+          <Box>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Check in
+            </Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {checkIn ? dayjs(checkIn).format("ddd, MMM D") : "Select date"}
+            </Typography>
+          </Box>
+          <Box sx={{ borderLeft: "1px solid #e6e6e6", pl: 1.5 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Check out
+            </Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {checkOut ? dayjs(checkOut).format("ddd, MMM D") : "Select date"}
+            </Typography>
+          </Box>
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            px: 1.5,
+            pt: 1.25,
+            color: "#0f6f5c",
+            fontWeight: 700,
+          }}
+        >
+          {activeDate === "checkIn"
+            ? "Choose your check-in date"
+            : "Choose your check-out date"}
+        </Typography>
+        <DateCalendar
+          disableHighlightToday={true}
+          disablePast={true}
+          value={null}
+          onChange={(date) => {
+            if (date) selectDate(date.format("YYYY-MM-DD"));
+          }}
+          slots={{ day: RangeDay }}
+          sx={{
+            width: "100%",
+            fontSize: { xs: "0.875rem", sm: "1rem" },
+            mt: 1,
+            "& .MuiPickersCalendarHeader-label": {
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            },
+          }}
+        />
+      </Box>
+    </LocalizationProvider>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        anchor="bottom"
+        open={Boolean(anchorEl)}
+        onClose={onClose}
+        slotProps={{
+          paper: {
+            sx: {
+              p: 1,
+              pb: 2,
+              width: "100%",
+              maxHeight: "92vh",
+              boxSizing: "border-box",
+              borderRadius: "16px 16px 0 0",
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <IconButton
+            type="button"
+            aria-label="Close date picker"
+            onClick={onClose}
+            size="small"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        {content}
+      </Drawer>
+    );
   }
 
   return (
@@ -43,105 +196,17 @@ export default function DatePickerPopover({
           sx: {
             mt: 1,
             p: { xs: 1, sm: 2 },
-            width: { xs: "calc(100vw - 32px)", sm: "auto" },
+            pb: { xs: 2, sm: 3 },
+            width: `25rem`,
             maxWidth: "calc(100vw - 32px)",
+            boxSizing: "border-box",
             borderRadius: 2,
             boxShadow: "0 18px 38px rgba(0,0,0,0.16)",
           },
         },
       }}
     >
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <>
-          <Box sx={{ display: { xs: "block", sm: "none" } }}>
-            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-              {[
-                { label: "From", value: "checkIn" },
-                { label: "To", value: "checkOut" },
-              ].map((option) => (
-                <ButtonBase
-                  key={option.value}
-                  onClick={() =>
-                    setActiveDate(option.value as "checkIn" | "checkOut")
-                  }
-                  sx={{
-                    flex: 1,
-                    py: 0.75,
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor:
-                      activeDate === option.value ? "#0f6f5c" : "#d7d7d7",
-                    color:
-                      activeDate === option.value
-                        ? "#0f6f5c"
-                        : "text.secondary",
-                    fontSize: "0.875rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {option.label}
-                </ButtonBase>
-              ))}
-            </Stack>
-            <DateCalendar
-              value={
-                activeDate === "checkIn"
-                  ? checkIn
-                    ? dayjs(checkIn)
-                    : null
-                  : checkOut
-                    ? dayjs(checkOut)
-                    : null
-              }
-              minDate={
-                activeDate === "checkOut" && checkIn
-                  ? dayjs(checkIn)
-                  : undefined
-              }
-              onChange={(date) => {
-                const value = date?.format("YYYY-MM-DD") ?? "";
-                if (activeDate === "checkIn") {
-                  selectCheckIn(value);
-                  setActiveDate("checkOut");
-                } else {
-                  onCheckOutChange(value);
-                }
-              }}
-              sx={{ width: "100%" }}
-            />
-          </Box>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ display: { xs: "none", sm: "flex" } }}
-          >
-            <Box>
-              <Typography variant="subtitle2" sx={{ pl: 1.5 }}>
-                From
-              </Typography>
-              <DateCalendar
-                value={checkIn ? dayjs(checkIn) : null}
-                onChange={(date) => {
-                  const value = date?.format("YYYY-MM-DD") ?? "";
-                  selectCheckIn(value);
-                }}
-              />
-            </Box>
-            <Box>
-              <Typography variant="subtitle2" sx={{ pl: 1.5 }}>
-                To
-              </Typography>
-              <DateCalendar
-                value={checkOut ? dayjs(checkOut) : null}
-                minDate={checkIn ? dayjs(checkIn) : undefined}
-                onChange={(date) =>
-                  onCheckOutChange(date?.format("YYYY-MM-DD") ?? "")
-                }
-              />
-            </Box>
-          </Stack>
-        </>
-      </LocalizationProvider>
+      {content}
     </Popover>
   );
 }
