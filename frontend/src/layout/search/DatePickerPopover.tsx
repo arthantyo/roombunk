@@ -12,6 +12,8 @@ type DatePickerPopoverProps = {
   anchorEl: HTMLElement | null;
   checkIn: string;
   checkOut: string;
+  minDate?: string;
+  initialActiveDate?: "checkIn" | "checkOut";
   onCheckInChange: (value: string) => void;
   onCheckOutChange: (value: string) => void;
   onClose: () => void;
@@ -21,13 +23,15 @@ export default function DatePickerPopover({
   anchorEl,
   checkIn,
   checkOut,
+  minDate,
+  initialActiveDate = "checkIn",
   onCheckInChange,
   onCheckOutChange,
   onClose,
 }: DatePickerPopoverProps) {
   const isMobile = useMediaQuery("(max-width:599.95px)");
   const [activeDate, setActiveDate] = useState<"checkIn" | "checkOut">(
-    "checkIn",
+    initialActiveDate,
   );
 
   function selectDate(value: string) {
@@ -132,6 +136,7 @@ export default function DatePickerPopover({
         <DateCalendar
           disableHighlightToday
           disablePast
+          minDate={minDate ? dayjs(minDate) : undefined}
           value={null}
           onChange={(date) => {
             if (date) selectDate(date.format("YYYY-MM-DD"));

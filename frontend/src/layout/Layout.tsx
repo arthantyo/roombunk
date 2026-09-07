@@ -22,10 +22,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import LogoutIcon from "@mui/icons-material/Logout";
-import HotelIcon from "@mui/icons-material/Hotel";
 import { useAuth } from "../auth/useAuth";
 import { useState } from "react";
 import HomeSearch from "./search/HomeSearch";
+import { Favorite, HomeFilled } from "@mui/icons-material";
 
 export default function Layout() {
   const { isAuthenticated, user, logout, openAuthModal } = useAuth();
@@ -155,13 +155,23 @@ export default function Layout() {
           <>
             <MenuItem
               component={RouterLink}
+              to="/wishlists"
+              onClick={closeAccountMenu}
+            >
+              <ListItemIcon>
+                <Favorite fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Wishlist</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={RouterLink}
               to="/reservations"
               onClick={closeAccountMenu}
             >
               <ListItemIcon>
-                <HotelIcon fontSize="small" />
+                <HomeFilled fontSize="small" />
               </ListItemIcon>
-              <ListItemText>My trips</ListItemText>
+              <ListItemText>Trips</ListItemText>
             </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>

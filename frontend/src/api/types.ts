@@ -8,6 +8,12 @@ export interface HotelDto {
   country: string;
 }
 
+export interface WishlistDto {
+  id: number;
+  name: string;
+  hotelIds: number[];
+}
+
 export interface RoomDto {
   id: number;
   roomType: string;

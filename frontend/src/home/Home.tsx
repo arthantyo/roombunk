@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
-import { Grow, Zoom } from "@mui/material";
+import { BookmarkBorder } from "@mui/icons-material";
+import { Grow, IconButton, Zoom } from "@mui/material";
 import {
   Box,
   Card,
@@ -13,6 +14,8 @@ import {
 } from "@mui/material";
 import { getHotels } from "../api/hotels";
 import type { HotelDto } from "../api/types";
+import WishlistModal from "../hotel/WishlistModal";
+import { useAuth } from "../auth/useAuth";
 
 const PAGE_SIZE = 8;
 
@@ -41,80 +44,100 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 function HotelCard({ hotel }: { hotel: HotelDto }) {
+  const { isAuthenticated, openAuthModal } = useAuth();
+  const [wishlistOpen, setWishlistOpen] = useState(false);
+
   return (
-    <Card
-      component={RouterLink}
-      to={`/hotels/${hotel.id}`}
-      sx={{
-        minWidth: 0,
-        width: "100%",
-        background: "transparent",
-        boxShadow: "none",
-        border: "none",
-        textDecoration: "none",
-        flexShrink: 0,
-        color: "inherit",
-      }}
-    >
-      <Box sx={{ position: "relative" }}>
-        <CardMedia
-          component="img"
-          image={
-            // eslint-disable-next-line react-hooks/purity
-            Math.random() > 0.66
-              ? "/images/studio-stock.png"
-              : // eslint-disable-next-line react-hooks/purity
-                Math.random() > 0.5
-                ? "/images/hotel-stock.png"
-                : "/images/apartment-stock.png"
-          }
-          alt={hotel.name}
-          sx={{
-            width: "100%",
-            aspectRatio: "1",
-            borderRadius: 4,
-            objectFit: "cover",
-          }}
-        />
-        {/* <IconButton
-          aria-label="favorite"
-          sx={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            background: "rgba(255,255,255,0.85)",
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            ":hover": { background: "rgba(255,255,255,0.95)" },
-          }}
-        >
-          <FavoriteBorderIcon fontSize="small" sx={{ color: "#1d1d1d" }} />
-        </IconButton> */}
-      </Box>
-      <Box sx={{ mt: 1.2, px: 0.5 }}>
-        <Typography
-          variant="body1"
-          sx={{
-            fontSize: { xs: "1rem", md: "1.1rem" },
-            fontWeight: 600,
-            lineHeight: 1.35,
-          }}
-        >
-          {hotel.name}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ fontSize: { xs: "0.875rem", md: "1rem" }, mt: 0.2 }}
-        >
-          {hotel.city}, {hotel.country}
-        </Typography>
-        {/* <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 500 }}>
+    <>
+      <Card
+        component={RouterLink}
+        to={`/hotels/${hotel.id}`}
+        sx={{
+          minWidth: 0,
+          width: "100%",
+          background: "transparent",
+          boxShadow: "none",
+          border: "none",
+          textDecoration: "none",
+          flexShrink: 0,
+          color: "inherit",
+        }}
+      >
+        <Box sx={{ position: "relative" }}>
+          <CardMedia
+            component="img"
+            image={
+              // eslint-disable-next-line react-hooks/purity
+              Math.random() > 0.66
+                ? "/images/studio-stock.png"
+                : // eslint-disable-next-line react-hooks/purity
+                  Math.random() > 0.5
+                  ? "/images/hotel-stock.png"
+                  : "/images/apartment-stock.png"
+            }
+            alt={hotel.name}
+            sx={{
+              width: "100%",
+              aspectRatio: "1",
+              borderRadius: 4,
+              objectFit: "cover",
+            }}
+          />
+          <IconButton
+            aria-label={`Save ${hotel.name} to a wishlist`}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!isAuthenticated) {
+                openAuthModal();
+                return;
+              }
+              setWishlistOpen(true);
+            }}
+            sx={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              background: "rgba(255,255,255,0.85)",
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              ":hover": { background: "rgba(255,255,255,0.95)" },
+            }}
+          >
+            <BookmarkBorder fontSize="small" sx={{ color: "#1d1d1d" }} />
+          </IconButton>
+        </Box>
+        <Box sx={{ mt: 1.2, px: 0.5 }}>
+          <Typography
+            variant="body1"
+            sx={{
+              fontSize: { xs: "1rem", md: "1.1rem" },
+              fontWeight: 600,
+              lineHeight: 1.35,
+            }}
+          >
+            {hotel.name}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontSize: { xs: "0.875rem", md: "1rem" }, mt: 0.2 }}
+          >
+            {hotel.city}, {hotel.country}
+          </Typography>
+          {/* <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 500 }}>
           {formattedPrice}
         </Typography> */}
-      </Box>
-    </Card>
+        </Box>
+      </Card>
+      <WishlistModal
+        hotelId={hotel.id}
+        hotelName={hotel.name}
+        open={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+      />
+    </>
   );
 }
 

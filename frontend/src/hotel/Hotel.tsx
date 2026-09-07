@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import AmenityItem from "./amenities/AmenityItem";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Box, Button, Divider, Skeleton, Typography } from "@mui/material";
@@ -8,6 +8,9 @@ import BookingSidebar from "./BookingSidebar";
 import { BookmarkBorder, GridView, Star } from "@mui/icons-material";
 import ReviewSummary from "./ReviewSummary";
 import PageNotFound from "../layout/PageNotFound";
+import WishlistModal from "./WishlistModal";
+import { useAuth } from "../auth/useAuth";
+import { useMemo, useState } from "react";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -21,6 +24,8 @@ function tomorrowIso() {
 
 export default function Hotel() {
   const { id } = useParams();
+  const { isAuthenticated, openAuthModal } = useAuth();
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   // const navigate = useNavigate();
   // const { isAuthenticated } = useAuth();
 
@@ -236,12 +241,19 @@ export default function Hotel() {
             fontSize: { xs: "2rem", md: "2.4rem" },
           }}
         >
-          {hotel.name} with a bunch of other cool things and other nonsense
+          {hotel.name}
         </Typography>
 
         <Button
           variant="outlined"
           startIcon={<BookmarkBorder fontSize="small" />}
+          onClick={() => {
+            if (!isAuthenticated) {
+              openAuthModal();
+              return;
+            }
+            setWishlistOpen(true);
+          }}
           sx={{
             alignSelf: "center",
             borderRadius: 2,
@@ -264,6 +276,13 @@ export default function Hotel() {
           </Box>
         </Button>
       </Box>
+
+      <WishlistModal
+        hotelId={hotel.id}
+        hotelName={hotel.name}
+        open={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+      />
 
       <Box
         sx={{
@@ -425,6 +444,38 @@ export default function Hotel() {
           </Box>
 
           <Divider sx={{ mb: 3 }} />
+
+          <Box>
+            <Typography sx={{ fontSize: "1.5rem", fontWeight: 500, mb: 3 }}>
+              What this place offers
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 3,
+              }}
+            >
+              {(["WIFI", "GYM", "TV", "ELEVATOR"] as const).map((amenity) => (
+                <AmenityItem key={amenity} type={amenity} />
+              ))}
+            </Box>
+            <Button
+              variant="contained"
+              sx={{
+                mt: 3,
+                py: 1.2,
+                alignSelf: "flex-start",
+                textTransform: "none",
+                color: "#222222",
+                backgroundColor: "#f1f1f1",
+                boxShadow: "none",
+                "&:hover": { backgroundColor: "#e6e6e6", boxShadow: "none" },
+              }}
+            >
+              Show all amenities
+            </Button>
+          </Box>
         </Box>
         <Box>
           <BookingSidebar

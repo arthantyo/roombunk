@@ -176,6 +176,7 @@ export default function HomeSearch() {
         onClose={() => setDestinationAnchor(null)}
       />
       <DatePickerPopover
+        key={datePickerAnchor ? "open" : "closed"}
         anchorEl={datePickerAnchor}
         checkIn={checkIn}
         checkOut={checkOut}

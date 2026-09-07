@@ -119,7 +119,11 @@ export default function ReviewSummary() {
         }}
       >
         <Box
-          sx={{ display: { xs: "none", sm: "block" }, pr: 3, minWidth: 150 }}
+          sx={{
+            display: { xs: "none", sm: "none", md: "block" },
+            pr: 3,
+            minWidth: 150,
+          }}
         >
           <Typography sx={{ fontSize: "0.85rem", mb: 1.25 }}>
             Overall rating
@@ -155,7 +159,7 @@ export default function ReviewSummary() {
           <Box
             key={label}
             sx={{
-              display: { xs: "none", sm: "flex" },
+              display: { xs: "none", sm: "none", md: "flex" },
               minWidth: 115,
               px: 2.5,
               borderLeft: "1px solid #dddddd",
