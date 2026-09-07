@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
+import { Grow } from "@mui/material";
 import {
   Box,
   Card,
@@ -32,7 +33,7 @@ function SectionHeader({ title }: { title: string }) {
       <Typography
         variant="h4"
         sx={{
-          fontWeight: 700,
+          fontWeight: 500,
           fontSize: { xs: "1.2rem", md: "1.4rem" },
           letterSpacing: -0.8,
         }}
@@ -177,8 +178,12 @@ export default function Home() {
             ))}
 
           {!isLoading &&
-            filteredHotels.map((hotel: HotelDto) => (
-              <HotelCard key={hotel.id} hotel={hotel} />
+            filteredHotels.map((hotel: HotelDto, index) => (
+              <Grow in={!isLoading} timeout={300 + index * 70} key={hotel.id}>
+                <Box>
+                  <HotelCard hotel={hotel} />
+                </Box>
+              </Grow>
             ))}
         </Box>
       </Box>
