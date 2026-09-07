@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
-import { Grow } from "@mui/material";
+import { Grow, Zoom } from "@mui/material";
 import {
   Box,
   Card,
@@ -15,10 +15,6 @@ import { getHotels } from "../api/hotels";
 import type { HotelDto } from "../api/types";
 
 const PAGE_SIZE = 8;
-
-function getHotelImage() {
-  return "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80";
-}
 
 function SectionHeader({ title }: { title: string }) {
   return (
@@ -63,7 +59,15 @@ function HotelCard({ hotel }: { hotel: HotelDto }) {
       <Box sx={{ position: "relative" }}>
         <CardMedia
           component="img"
-          image={getHotelImage()}
+          image={
+            // eslint-disable-next-line react-hooks/purity
+            Math.random() > 0.66
+              ? "/images/studio-stock.png"
+              : // eslint-disable-next-line react-hooks/purity
+                Math.random() > 0.5
+                ? "/images/hotel-stock.png"
+                : "/images/apartment-stock.png"
+          }
           alt={hotel.name}
           sx={{
             width: "100%",
@@ -89,10 +93,21 @@ function HotelCard({ hotel }: { hotel: HotelDto }) {
         </IconButton> */}
       </Box>
       <Box sx={{ mt: 1.2, px: 0.5 }}>
-        <Typography variant="body1" sx={{ fontWeight: 600, lineHeight: 1.35 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            fontSize: { xs: "1rem", md: "1.1rem" },
+            fontWeight: 600,
+            lineHeight: 1.35,
+          }}
+        >
           {hotel.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.2 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.875rem", md: "1rem" }, mt: 0.2 }}
+        >
           {hotel.city}, {hotel.country}
         </Typography>
         {/* <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 500 }}>
@@ -198,18 +213,20 @@ export default function Home() {
 
       {!isLoading && filteredHotels.length === 0 && (
         <Box sx={{ textAlign: "center" }}>
-          <Box
-            component="img"
-            src="/images/no-hotels.png"
-            alt="No hotels found"
-            sx={{
-              display: "block",
-              width: "100%",
-              maxWidth: "500px",
-              height: "auto",
-              mx: "auto",
-            }}
-          />
+          <Zoom in>
+            <Box
+              component="img"
+              src="/images/no-hotels.png"
+              alt="No hotels found"
+              sx={{
+                display: "block",
+                width: "100%",
+                maxWidth: "500px",
+                height: "auto",
+                mx: "auto",
+              }}
+            />
+          </Zoom>
           <Typography
             variant="h6"
             sx={{

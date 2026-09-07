@@ -93,7 +93,14 @@ export default function ReviewSummary() {
         mt: 4,
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          marginBottom: { xs: 0, md: 1.5 },
+        }}
+      >
         <Star sx={{ color: "#222222", fontSize: 22 }} />
         <Typography sx={{ fontSize: "1.35rem", fontWeight: 500 }}>
           4.78 · 151 reviews
@@ -171,7 +178,7 @@ export default function ReviewSummary() {
         ))}
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: { xs: 0, md: 3 } }}>
         <Typography sx={{ fontSize: "1.05rem", fontWeight: 500, mb: 2 }}>
           Guest reviews mention
         </Typography>

@@ -222,7 +222,7 @@ export default function Hotel() {
           display: "flex",
           flexDirection: { md: "row" },
           justifyContent: "space-between",
-          alignItems: { md: "center" },
+          alignItems: { xs: "flex-start", md: "center" },
           gap: 6,
           my: 2.5,
         }}
@@ -236,26 +236,33 @@ export default function Hotel() {
             fontSize: { xs: "2rem", md: "2.4rem" },
           }}
         >
-          {hotel.name}
+          {hotel.name} with a bunch of other cool things and other nonsense
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-          <Button
-            variant="outlined"
-            startIcon={<BookmarkBorder fontSize="small" />}
-            sx={{
-              borderRadius: 2,
-              color: "#222222",
-              borderColor: "rgba(18,18,18,0.2)",
-              backgroundColor: "transparent",
-              px: 1.5,
-              textTransform: "none",
-              fontWeight: 500,
-            }}
-          >
+        <Button
+          variant="outlined"
+          startIcon={<BookmarkBorder fontSize="small" />}
+          sx={{
+            alignSelf: "center",
+            borderRadius: 2,
+            color: "#222222",
+            borderColor: "rgba(18,18,18,0.2)",
+            backgroundColor: "transparent",
+            px: { xs: 1, sm: 1.5 },
+            minWidth: { xs: 40, sm: "auto" },
+            textTransform: "none",
+            fontWeight: 500,
+            flexShrink: 0,
+
+            "& .MuiButton-startIcon": {
+              margin: { xs: 0, sm: "0 8px 0 -4px" },
+            },
+          }}
+        >
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
             Save
-          </Button>
-        </Box>
+          </Box>
+        </Button>
       </Box>
 
       <Box

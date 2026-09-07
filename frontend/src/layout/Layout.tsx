@@ -84,7 +84,15 @@ export default function Layout() {
               component="img"
               src="/images/face.png"
               alt="Roombunk.nl Logo"
-              sx={{ width: 34, height: 34, objectFit: "contain" }}
+              sx={{
+                width: 34,
+                height: 34,
+                objectFit: "contain",
+                transition: "transform 0.2s ease",
+                "&:hover": {
+                  transform: "scale(1.1)",
+                },
+              }}
             />
             <Typography
               variant="h6"

@@ -6,8 +6,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   IconButton,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { useState } from "react";
 import type { RoomDto } from "../api/types";
@@ -38,6 +40,7 @@ export default function RoomSelectionModal({
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
     rooms[0]?.id ?? null,
   );
+  const isMobile = useMediaQuery("(max-width:599.95px)");
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId);
   const dateRange = [checkInDate, checkOutDate]
     .filter(Boolean)
@@ -50,18 +53,8 @@ export default function RoomSelectionModal({
     )
     .join(" – ");
 
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      slotProps={{
-        paper: {
-          sx: { borderRadius: 2, m: 2, overflow: "hidden" },
-        },
-      }}
-    >
+  const content = (
+    <>
       <DialogTitle
         sx={{
           px: { xs: 2.5, sm: 3 },
@@ -200,6 +193,44 @@ export default function RoomSelectionModal({
           Next
         </ButtonBase>
       </DialogActions>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        anchor="bottom"
+        open={open}
+        onClose={onClose}
+        slotProps={{
+          paper: {
+            sx: {
+              width: "100%",
+              maxHeight: "90vh",
+              borderRadius: "16px 16px 0 0",
+              overflow: "hidden",
+            },
+          },
+        }}
+      >
+        {content}
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      slotProps={{
+        paper: {
+          sx: { borderRadius: 2, m: 2, overflow: "hidden" },
+        },
+      }}
+    >
+      {content}
     </Dialog>
   );
 }
