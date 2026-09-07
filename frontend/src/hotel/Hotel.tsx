@@ -1,4 +1,3 @@
-import AmenityItem from "./amenities/AmenityItem";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Box, Button, Divider, Skeleton, Typography } from "@mui/material";
@@ -11,6 +10,7 @@ import PageNotFound from "../layout/PageNotFound";
 import WishlistModal from "./WishlistModal";
 import { useAuth } from "../auth/useAuth";
 import { useMemo, useState } from "react";
+import { AmenitySection } from "./amenities/AmenitySection";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -450,37 +450,17 @@ export default function Hotel() {
 
           <Divider sx={{ mb: 3 }} />
 
-          <Box>
-            <Typography sx={{ fontSize: "1.5rem", fontWeight: 500, mb: 3 }}>
-              What this place offers
-            </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 3,
-              }}
-            >
-              {(["WIFI", "GYM", "TV", "ELEVATOR"] as const).map((amenity) => (
-                <AmenityItem key={amenity} type={amenity} />
-              ))}
-            </Box>
-            <Button
-              variant="contained"
-              sx={{
-                mt: 3,
-                py: 1.2,
-                alignSelf: "flex-start",
-                textTransform: "none",
-                color: "#222222",
-                backgroundColor: "#f1f1f1",
-                boxShadow: "none",
-                "&:hover": { backgroundColor: "#e6e6e6", boxShadow: "none" },
-              }}
-            >
-              Show all amenities
-            </Button>
-          </Box>
+          <AmenitySection
+            amenities={[
+              "WIFI",
+              "BALCONY",
+              "ELEVATOR",
+              "TV",
+              "BBQ",
+              "DINING_AREA",
+              "GARDEN",
+            ]}
+          />
         </Box>
         <Box
           sx={{

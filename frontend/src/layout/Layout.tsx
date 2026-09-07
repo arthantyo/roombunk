@@ -10,6 +10,7 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -173,6 +174,7 @@ export default function Layout() {
               </ListItemIcon>
               <ListItemText>Trips</ListItemText>
             </MenuItem>
+            <Divider sx={{ my: 0.5, borderColor: "#eceae5" }} />
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <LogoutIcon fontSize="small" />

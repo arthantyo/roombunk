@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Drawer,
   IconButton,
+  Skeleton,
   TextField,
   Typography,
   useMediaQuery,
@@ -148,9 +149,30 @@ export default function WishlistModal({
         )}
 
         <Box sx={{ display: "grid", gap: 1 }}>
-          {isLoading && (
-            <Typography sx={{ color: "#666" }}>Loading wishlists...</Typography>
-          )}
+          {isLoading &&
+            Array.from({ length: 3 }).map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  px: 1.5,
+                  py: 1.25,
+                  border: "1px solid #dedede",
+                  borderRadius: 1.5,
+                }}
+              >
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton variant="text" width="45%" height={24} />
+
+                  <Skeleton variant="text" width={60} height={18} />
+                </Box>
+
+                <Skeleton variant="circular" width={20} height={20} />
+              </Box>
+            ))}
 
           {hasWishlists &&
             wishlists.map((wishlist) => {
