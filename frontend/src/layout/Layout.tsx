@@ -82,7 +82,7 @@ export default function Layout() {
           >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 800, letterSpacing: -0.6 }}
+              sx={{ fontWeight: 500, letterSpacing: -0.6 }}
             >
               Roombunk.nl
             </Typography>

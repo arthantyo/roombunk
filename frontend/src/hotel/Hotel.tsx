@@ -1,24 +1,19 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
   Box,
   Button,
   Divider,
-  MenuItem,
   Skeleton,
-  TextField,
   Typography,
 } from "@mui/material";
-import BookmarksOutlinedIcon from "@mui/icons-material/BookmarksOutlined";
-import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import { getHotelById } from "../api/hotels";
 import { getRoomsByHotelId } from "../api/rooms";
-import { createHold } from "../api/reservations";
-import { ApiError } from "../api/client";
-import { useAuth } from "../auth/useAuth";
-import type { RoomDto } from "../api/types";
+import BookingSidebar from "./BookingSidebar";
+import { BookmarkBorder, GridView, Star } from "@mui/icons-material";
+import ReviewSummary from "./ReviewSummary";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -32,15 +27,18 @@ function tomorrowIso() {
 
 export default function Hotel() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  // const navigate = useNavigate();
+  // const { isAuthenticated } = useAuth();
 
   const [checkInDate, setCheckInDate] = useState(todayIso());
   const [checkOutDate, setCheckOutDate] = useState(tomorrowIso());
-  const [guests, setGuests] = useState("1");
-  const [selectedRoom, setSelectedRoom] = useState<RoomDto | null>(null);
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [isBooking, setIsBooking] = useState(false);
+  const [adults, setAdults] = useState(1);
+  const [childrenCount, setChildrenCount] = useState(0);
+  const [infants, setInfants] = useState(0);
+  const [pets, setPets] = useState(false);
+  // const [, setSelectedRoom] = useState<RoomDto | null>(null);
+  // const [bookingError, setBookingError] = useState<string | null>(null);
+  // const [, setIsBooking] = useState(false);
 
   const { data: hotel, isLoading: hotelLoading } = useQuery({
     queryKey: ["hotel", id],
@@ -48,7 +46,7 @@ export default function Hotel() {
     enabled: !!id,
   });
 
-  const { data: rooms, isLoading: roomsLoading } = useQuery({
+  const { data: rooms } = useQuery({
     queryKey: ["rooms", id],
     queryFn: () => getRoomsByHotelId(id!),
     enabled: !!id,
@@ -82,53 +80,53 @@ export default function Hotel() {
     }
   };
 
-  async function handleBook(room: RoomDto) {
-    setBookingError(null);
+  // async function handleBook(room: RoomDto) {
+  //   setBookingError(null);
 
-    if (!isAuthenticated) {
-      navigate("/login", { state: { from: { pathname: `/hotels/${id}` } } });
-      return;
-    }
+  //   if (!isAuthenticated) {
+  //     navigate("/login", { state: { from: { pathname: `/hotels/${id}` } } });
+  //     return;
+  //   }
 
-    if (nights <= 0) {
-      setBookingError("Check-out date must be after check-in date.");
-      return;
-    }
+  //   if (nights <= 0) {
+  //     setBookingError("Check-out date must be after check-in date.");
+  //     return;
+  //   }
 
-    setSelectedRoom(room);
-    setIsBooking(true);
+  //   setSelectedRoom(room);
+  //   setIsBooking(true);
 
-    try {
-      const hold = await createHold({
-        room: { id: room.id, hotel: { id: room.hotelId } },
-        checkInDate,
-        checkOutDate,
-      });
+  //   try {
+  //     const hold = await createHold({
+  //       room: { id: room.id, hotel: { id: room.hotelId } },
+  //       checkInDate,
+  //       checkOutDate,
+  //     });
 
-      navigate("/checkout", {
-        state: {
-          holdToken: hold.holdToken,
-          hotelId: hold.hotelId,
-          roomId: hold.roomId,
-          checkInDate: hold.checkInDate,
-          checkOutDate: hold.checkOutDate,
-          expiresAt: hold.expiresAt,
-          hotelName: hotel?.name,
-          roomType: room.roomType,
-          pricePerNight: room.pricePerNight,
-          nights,
-        },
-      });
-    } catch (err) {
-      setBookingError(
-        err instanceof ApiError
-          ? err.message
-          : "This room is unavailable for the selected dates. Please try different dates.",
-      );
-    } finally {
-      setIsBooking(false);
-    }
-  }
+  //     navigate("/checkout", {
+  //       state: {
+  //         holdToken: hold.holdToken,
+  //         hotelId: hold.hotelId,
+  //         roomId: hold.roomId,
+  //         checkInDate: hold.checkInDate,
+  //         checkOutDate: hold.checkOutDate,
+  //         expiresAt: hold.expiresAt,
+  //         hotelName: hotel?.name,
+  //         roomType: room.roomType,
+  //         pricePerNight: room.pricePerNight,
+  //         nights,
+  //       },
+  //     });
+  //   } catch (err) {
+  //     setBookingError(
+  //       err instanceof ApiError
+  //         ? err.message
+  //         : "This room is unavailable for the selected dates. Please try different dates.",
+  //     );
+  //   } finally {
+  //     setIsBooking(false);
+  //   }
+  // }
 
   const galleryImages = useMemo(
     () => [
@@ -154,21 +152,20 @@ export default function Hotel() {
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", md: "row" },
+          flexDirection: { md: "row" },
           justifyContent: "space-between",
-          alignItems: { xs: "flex-start", md: "center" },
+          alignItems: { md: "center" },
           gap: 6,
-          mb: 2.5,
+          my: 2.5,
         }}
       >
         <Typography
           variant="h2"
           sx={{
-            fontWeight: 800,
+            fontWeight: 500,
             letterSpacing: -2,
             lineHeight: 1,
-            fontSize: { xs: "2.4rem", md: "4rem" },
-            color: "#1f1f1f",
+            fontSize: { xs: "2rem", md: "2.4rem" },
           }}
         >
           {hotel.name}
@@ -177,15 +174,15 @@ export default function Hotel() {
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Button
             variant="outlined"
-            startIcon={<BookmarksOutlinedIcon fontSize="small" />}
+            startIcon={<BookmarkBorder fontSize="small" />}
             sx={{
               borderRadius: 2,
+              color: "#222222",
               borderColor: "rgba(18,18,18,0.2)",
-              color: "#1f1f1f",
-              backgroundColor: "rgba(255,255,255,0.3)",
+              backgroundColor: "transparent",
               px: 1.5,
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: 500,
             }}
           >
             Save
@@ -197,28 +194,60 @@ export default function Hotel() {
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.55fr 1fr" },
-          gridTemplateRows: { xs: "340px 340px", md: "560px" },
+          gridTemplateRows: {
+            xs: "clamp(240px, 78vw, 520px)",
+            md: "clamp(420px, 42vw, 560px)",
+          },
           gap: 1.2,
           mb: 3,
         }}
       >
         <Box
-          component="img"
-          src={galleryImages[0]}
-          alt={hotel.name}
           sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            borderRadius: 4,
-            display: "block",
-            boxShadow: "0 28px 50px rgba(0, 0, 0, 0.08)",
+            position: "relative",
+            minWidth: 0,
+            minHeight: 0,
           }}
-        />
+        >
+          <Box
+            component="img"
+            src={galleryImages[0]}
+            alt={hotel.name}
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: { xs: "1.5rem", md: "3em 0 0 3rem" },
+              display: "block",
+              boxShadow: "0 28px 50px rgba(0, 0, 0, 0.08)",
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<GridView fontSize="small" />}
+            sx={{
+              display: { xs: "inline-flex", md: "none" },
+              position: "absolute",
+              right: 12,
+              bottom: 12,
+              borderRadius: 1.5,
+              px: 1.5,
+              py: 0.8,
+              backgroundColor: "rgba(255, 255, 255, 0.94)",
+              color: "#222222",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.18)",
+              textTransform: "none",
+              fontWeight: 400,
+              "&:hover": { backgroundColor: "#ffffff" },
+            }}
+          >
+            Show photos
+          </Button>
+        </Box>
 
         <Box
           sx={{
-            display: "grid",
+            display: { xs: "none", md: "grid" },
             gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
             gap: 1.2,
             height: "100%",
@@ -234,7 +263,8 @@ export default function Hotel() {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                borderRadius: 4,
+                borderRadius:
+                  index === 1 ? "0 3rem 0 0" : index === 3 ? "0 0 3rem 0" : "0",
                 display: "block",
                 boxShadow: "0 22px 40px rgba(0, 0, 0, 0.06)",
               }}
@@ -247,9 +277,9 @@ export default function Hotel() {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            md: "minmax(0, 1.8fr) minmax(260px, 0.6fr)",
+            md: "minmax(0, 1.8fr) minmax(260px, 1fr)",
           },
-          gap: { xs: 3, md: 4 },
+          gap: { xs: 3, md: 12 },
           alignItems: "flex-start",
         }}
       >
@@ -264,19 +294,45 @@ export default function Hotel() {
               mb: 3,
             }}
           >
-            <Box>
+            <Box sx={{ flex: "1 1 0", minWidth: 0, mt: 1.2 }}>
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 800,
+                  fontWeight: 500,
                   letterSpacing: -1,
                   color: "#1e1e1e",
                   mb: 1,
-                  fontSize: { xs: "2rem", md: "2.3rem" },
+                  fontSize: { xs: "1.6rem", md: "1.8rem" },
                 }}
               >
                 Hotel in {hotel.city}, {hotel.country}
               </Typography>
+
+              {/* rating */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  color: "black",
+                  marginBottom: 1.5,
+                }}
+              >
+                <Typography sx={{ fontWeight: 500, fontSize: "1.05rem" }}>
+                  <Star sx={{ color: "black", fontSize: 10, mr: 0.5 }} />
+                  4.78 •
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: "1.05rem",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                  }}
+                >
+                  121 reviews
+                </Typography>
+              </Box>
 
               <Typography
                 sx={{
@@ -293,15 +349,15 @@ export default function Hotel() {
             </Box>
           </Box>
 
-          {bookingError && (
+          {/* {bookingError && (
             <Alert severity="error" sx={{ borderRadius: 2, mb: 2 }}>
               {bookingError}
             </Alert>
-          )}
+          )} */}
 
           <Divider sx={{ mb: 3 }} />
 
-          <Box>
+          {/* <Box>
             <Typography
               variant="h5"
               sx={{ fontWeight: 800, mb: 2, letterSpacing: -0.7 }}
@@ -451,161 +507,31 @@ export default function Hotel() {
                 No rooms are available for this hotel right now.
               </Typography>
             )}
-          </Box>
+          </Box> */}
         </Box>
         <Box>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "stretch",
-              minWidth: 260,
-              width: { xs: "100%", md: "100%" },
-              p: 2.25,
-              borderRadius: 2,
-              background: "#ffffff",
-              border: "1px solid #ececec",
-              boxShadow: "0 5px 18px rgba(0,0,0,0.10)",
-              position: { md: "sticky" },
-              top: { md: 24 },
-            }}
-          >
-            <Typography
-              sx={{
-                fontWeight: 750,
-                fontSize: "1rem",
-                textDecoration: "underline",
-                textUnderlineOffset: "3px",
-                mb: 2,
-              }}
-            >
-              {lowestNightlyRate !== null && nights > 0
-                ? `From $${(lowestNightlyRate * nights).toFixed(2)} total`
-                : "Choose your dates"}
-            </Typography>
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                border: "1px solid #858585",
-                borderBottom: { xs: "1px solid #858585", sm: 0 },
-                borderRadius: { xs: 2, sm: "10px 10px 0 0" },
-                overflow: "hidden",
-                height: { xs: "auto", sm: 48 },
-              }}
-            >
-              <TextField
-                type="date"
-                value={checkInDate}
-                onChange={(e) => handleCheckInChange(e.target.value)}
-                slotProps={{
-                  htmlInput: { min: todayIso() },
-                }}
-                fullWidth
-                sx={{
-                  "& .MuiOutlinedInput-notchedOutline": { border: 0 },
-                  "& .MuiInputBase-input": {
-                    px: 1.25,
-                    py: 2.15,
-                    fontSize: "0.85rem",
-                  },
-                  "& .MuiInputBase-root": { borderRadius: 0 },
-                  "&::before": {
-                    content: '"CHECK-IN"',
-                    position: "absolute",
-                    top: 7,
-                    left: 10,
-                    zIndex: 1,
-                    color: "#222",
-                    fontSize: "0.55rem",
-                    fontWeight: 800,
-                    pointerEvents: "none",
-                  },
-                }}
-              />
-              <TextField
-                type="date"
-                value={checkOutDate}
-                onChange={(e) => setCheckOutDate(e.target.value)}
-                slotProps={{
-                  htmlInput: { min: checkInDate },
-                }}
-                fullWidth
-                sx={{
-                  height: "100%",
-                  borderLeft: { xs: 0, sm: "1px solid #858585" },
-                  borderTop: { xs: "1px solid #858585", sm: 0 },
-                  "& .MuiOutlinedInput-notchedOutline": { border: 0 },
-                  "& .MuiInputBase-input": {
-                    px: 1.25,
-                    py: 2.15,
-                    fontSize: "0.85rem",
-                  },
-                  "& .MuiInputBase-root": { borderRadius: 0 },
-                  "&::before": {
-                    content: '"CHECK-OUT"',
-                    position: "absolute",
-                    top: 7,
-                    left: 10,
-                    zIndex: 1,
-                    color: "#222",
-                    fontSize: "0.55rem",
-                    fontWeight: 800,
-                    pointerEvents: "none",
-                  },
-                }}
-              />
-            </Box>
-
-            <TextField
-              select
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: { xs: 2, sm: "0 0 10px 10px" },
-                  fontSize: "0.78rem",
-                },
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#858585",
-                },
-                "& .MuiInputBase-input": { pt: 2.35, pb: 0.9 },
-                "&::before": {
-                  content: '"GUESTS"',
-                  position: "absolute",
-                  top: 7,
-                  left: 10,
-                  zIndex: 1,
-                  color: "#222",
-                  fontSize: "0.55rem",
-                  fontWeight: 800,
-                  pointerEvents: "none",
-                },
-              }}
-            >
-              {[1, 2, 3, 4, 5, 6].map((guestCount) => (
-                <MenuItem key={guestCount} value={String(guestCount)}>
-                  {guestCount} guest{guestCount > 1 ? "s" : ""}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Typography
-              sx={{
-                color: "#555",
-                textAlign: "center",
-                fontSize: "0.72rem",
-                pt: 0.25,
-                mt: 1,
-              }}
-            >
-              Select a room below to reserve
-            </Typography>
-          </Box>
+          <BookingSidebar
+            rooms={rooms ?? []}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            adults={adults}
+            childrenCount={childrenCount}
+            infants={infants}
+            pets={pets}
+            minCheckInDate={todayIso()}
+            lowestNightlyRate={lowestNightlyRate}
+            nights={nights}
+            onCheckInChange={handleCheckInChange}
+            onCheckOutChange={setCheckOutDate}
+            onAdultsChange={setAdults}
+            onChildrenChange={setChildrenCount}
+            onInfantsChange={setInfants}
+            onPetsChange={setPets}
+          />
         </Box>
       </Box>
+      <Divider sx={{ my: 4 }} />
+      <ReviewSummary />
     </Box>
   );
 }
