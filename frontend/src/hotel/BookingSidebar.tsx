@@ -1,8 +1,6 @@
-import { Box, ButtonBase, Typography } from "@mui/material";
-import dayjs from "dayjs";
+import { Box, ButtonBase, TextField, Typography } from "@mui/material";
 import { useRef, useState } from "react";
 import type { RoomDto } from "../api/types";
-import DatePickerPopover from "../layout/search/DatePickerPopover";
 import GuestsPopover from "./GuestsPopover";
 import RoomSelectionModal from "./RoomSelectionModal";
 
@@ -20,17 +18,14 @@ function fieldLabelSx(label: string) {
   } as const;
 }
 
-const dateFieldButtonSx = {
-  position: "relative",
-  width: "100%",
-  minHeight: 68,
-  justifyContent: "flex-start",
-  px: 1.5,
-  pt: 2.1,
-  pb: 0.9,
-  fontSize: "1.05rem",
-  color: "text.primary",
-  textAlign: "left",
+const dateInputSx = {
+  "& .MuiOutlinedInput-notchedOutline": { border: 0 },
+  "& .MuiInputBase-input": {
+    px: 1.5,
+    py: 3.4,
+    fontSize: "1.05rem",
+  },
+  "& .MuiInputBase-root": { borderRadius: 0 },
 } as const;
 
 interface BookingSidebarProps {
@@ -72,12 +67,6 @@ export default function BookingSidebar({
 }: BookingSidebarProps) {
   const guestFieldRef = useRef<HTMLDivElement | null>(null);
   const [guestAnchor, setGuestAnchor] = useState<HTMLElement | null>(null);
-  const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLElement | null>(
-    null,
-  );
-  const [activeDateField, setActiveDateField] = useState<
-    "checkIn" | "checkOut"
-  >("checkIn");
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const totalGuests = adults + childrenCount;
   const guestSummaryParts = [
@@ -133,49 +122,36 @@ export default function BookingSidebar({
           height: { xs: "auto", sm: 68 },
         }}
       >
-        <ButtonBase
-          onClick={(event) => {
-            setActiveDateField("checkIn");
-            setDatePickerAnchor(event.currentTarget);
+        <TextField
+          type="date"
+          value={checkInDate}
+          onChange={(e) => onCheckInChange(e.target.value)}
+          slotProps={{
+            htmlInput: { min: minCheckInDate },
           }}
-          aria-haspopup="dialog"
-          aria-expanded={Boolean(datePickerAnchor)}
+          fullWidth
           sx={{
-            ...dateFieldButtonSx,
+            ...dateInputSx,
             "&::before": fieldLabelSx("CHECK-IN"),
           }}
-        >
-          {checkInDate ? dayjs(checkInDate).format("ddd, MMM D") : "Add date"}
-        </ButtonBase>
-        <ButtonBase
-          onClick={(event) => {
-            setActiveDateField("checkOut");
-            setDatePickerAnchor(event.currentTarget);
+        />
+        <TextField
+          type="date"
+          value={checkOutDate}
+          onChange={(e) => onCheckOutChange(e.target.value)}
+          slotProps={{
+            htmlInput: { min: checkInDate },
           }}
-          aria-haspopup="dialog"
-          aria-expanded={Boolean(datePickerAnchor)}
+          fullWidth
           sx={{
-            ...dateFieldButtonSx,
+            ...dateInputSx,
+            height: "100%",
             borderLeft: { xs: 0, sm: "1px solid #858585" },
             borderTop: { xs: "1px solid #858585", sm: 0 },
             "&::before": fieldLabelSx("CHECK-OUT"),
           }}
-        >
-          {checkOutDate ? dayjs(checkOutDate).format("ddd, MMM D") : "Add date"}
-        </ButtonBase>
+        />
       </Box>
-
-      <DatePickerPopover
-        key={datePickerAnchor ? activeDateField : "closed"}
-        anchorEl={datePickerAnchor}
-        checkIn={checkInDate}
-        checkOut={checkOutDate}
-        minDate={minCheckInDate}
-        initialActiveDate={activeDateField}
-        onCheckInChange={onCheckInChange}
-        onCheckOutChange={onCheckOutChange}
-        onClose={() => setDatePickerAnchor(null)}
-      />
 
       <Box
         ref={guestFieldRef}

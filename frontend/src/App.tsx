@@ -13,6 +13,7 @@ import Checkout from "./checkout/Checkout.tsx";
 import Reservations from "./reservations/Reservations.tsx";
 import PageNotFound from "./layout/PageNotFound";
 import Wishlist from "./wishlist/Wishlist.tsx";
+import Precheckout from "./precheckout/Precheckout.tsx";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/reservations" element={<Reservations />} />
                 <Route path="/wishlists" element={<Wishlist />} />
+                <Route path="/book/:id" element={<Precheckout />} />
               </Route>
               <Route path="*" element={<PageNotFound />} />
             </Route>
