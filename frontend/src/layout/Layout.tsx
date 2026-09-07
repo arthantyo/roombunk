@@ -73,13 +73,19 @@ export default function Layout() {
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
               textDecoration: "none",
               color: "#0f6f5c",
               fontWeight: 800,
+              gap: 0.1,
               flexGrow: 1,
             }}
           >
+            <Box
+              component="img"
+              src="/images/face.png"
+              alt="Roombunk.nl Logo"
+              sx={{ width: 34, height: 34, objectFit: "contain" }}
+            />
             <Typography
               variant="h6"
               sx={{ fontWeight: 500, letterSpacing: -0.6 }}
