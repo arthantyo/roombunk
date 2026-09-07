@@ -377,7 +377,12 @@ export default function Hotel() {
           alignItems: "flex-start",
         }}
       >
-        <Box>
+        <Box
+          sx={{
+            flex: 1,
+            order: { xs: 2, md: 1 },
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -477,7 +482,12 @@ export default function Hotel() {
             </Button>
           </Box>
         </Box>
-        <Box>
+        <Box
+          sx={{
+            width: { xs: "100%", md: 380 },
+            order: { xs: 1, md: 2 },
+          }}
+        >
           <BookingSidebar
             rooms={rooms ?? []}
             checkInDate={checkInDate}
