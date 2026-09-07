@@ -28,7 +28,7 @@ import { useState } from "react";
 import HomeSearch from "./search/HomeSearch";
 
 export default function Layout() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [accountAnchor, setAccountAnchor] = useState<null | HTMLElement>(null);
@@ -159,9 +159,10 @@ export default function Layout() {
         ) : (
           <>
             <MenuItem
-              component={RouterLink}
-              to="/login"
-              onClick={closeAccountMenu}
+              onClick={() => {
+                closeAccountMenu();
+                openAuthModal("login");
+              }}
             >
               <ListItemIcon>
                 <LoginIcon fontSize="small" />
@@ -169,9 +170,10 @@ export default function Layout() {
               <ListItemText>Sign in</ListItemText>
             </MenuItem>
             <MenuItem
-              component={RouterLink}
-              to="/register"
-              onClick={closeAccountMenu}
+              onClick={() => {
+                closeAccountMenu();
+                openAuthModal("register");
+              }}
             >
               <ListItemIcon>
                 <PersonAddAlt1Icon fontSize="small" />

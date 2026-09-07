@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import * as authApi from "../api/auth";
 import { clearToken, getToken, setToken } from "../api/client";
 import { AuthContext, type DecodedUser } from "./context";
+import AuthModal from "./AuthModal";
 
 function decodeToken(token: string): DecodedUser | null {
   try {
@@ -17,6 +18,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getToken();
     return token ? decodeToken(token) : null;
   });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register">(
+    "login",
+  );
+
+  const openAuthModal = useCallback((mode: "login" | "register" = "login") => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setIsAuthModalOpen(false);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const { token } = await authApi.login(email, password);
@@ -39,9 +54,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isAuthenticated: !!user, login, register, logout }),
-    [user, login, register, logout],
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      login,
+      register,
+      logout,
+      isAuthModalOpen,
+      authModalMode,
+      openAuthModal,
+      closeAuthModal,
+    }),
+    [
+      user,
+      login,
+      register,
+      logout,
+      isAuthModalOpen,
+      authModalMode,
+      openAuthModal,
+      closeAuthModal,
+    ],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <AuthModal
+        open={isAuthModalOpen}
+        onClose={closeAuthModal}
+        mode={authModalMode}
+      />
+    </AuthContext.Provider>
+  );
 }

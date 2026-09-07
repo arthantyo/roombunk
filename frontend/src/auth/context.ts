@@ -15,6 +15,10 @@ export interface AuthContextValue {
     password: string,
   ) => Promise<void>;
   logout: () => void;
+  isAuthModalOpen: boolean;
+  authModalMode: "login" | "register";
+  openAuthModal: (mode?: "login" | "register") => void;
+  closeAuthModal: () => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
