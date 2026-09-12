@@ -7,7 +7,9 @@ import {
 } from "@mui/material";
 
 import {
+  Apartment,
   ChatBubble,
+  CollectionsBookmark,
   Favorite,
   HomeFilled,
   HomeWork,
@@ -81,30 +83,71 @@ export default function AccountMenu({
       }}
     >
       {isAuthenticated ? (
-        <>
-          <MenuItem component={RouterLink} to="/wishlists" onClick={onClose}>
-            <ListItemIcon>
-              <Favorite fontSize="small" />
-            </ListItemIcon>
+        isHostMode ? (
+          <>
+            <MenuItem
+              component={RouterLink}
+              to="/host/listings"
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <Apartment fontSize="small" />
+              </ListItemIcon>
 
-            <ListItemText>Wishlist</ListItemText>
-          </MenuItem>
+              <ListItemText>Listings</ListItemText>
+            </MenuItem>
 
-          <MenuItem component={RouterLink} to="/reservations" onClick={onClose}>
-            <ListItemIcon>
-              <HomeFilled fontSize="small" />
-            </ListItemIcon>
+            <MenuItem component={RouterLink} to="/host/" onClick={onClose}>
+              <ListItemIcon>
+                <CollectionsBookmark fontSize="small" />
+              </ListItemIcon>
 
-            <ListItemText>Trips</ListItemText>
-          </MenuItem>
-          <MenuItem component={RouterLink} to="/messages" onClick={onClose}>
-            <ListItemIcon>
-              <ChatBubble fontSize="small" />
-            </ListItemIcon>
+              <ListItemText>Reservations</ListItemText>
+            </MenuItem>
 
-            <ListItemText>Messages</ListItemText>
-          </MenuItem>
-        </>
+            <MenuItem
+              component={RouterLink}
+              to="/host/messages"
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <ChatBubble fontSize="small" />
+              </ListItemIcon>
+
+              <ListItemText>Messages</ListItemText>
+            </MenuItem>
+          </>
+        ) : (
+          <>
+            <MenuItem component={RouterLink} to="/wishlists" onClick={onClose}>
+              <ListItemIcon>
+                <Favorite fontSize="small" />
+              </ListItemIcon>
+
+              <ListItemText>Wishlist</ListItemText>
+            </MenuItem>
+
+            <MenuItem
+              component={RouterLink}
+              to="/reservations"
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <HomeFilled fontSize="small" />
+              </ListItemIcon>
+
+              <ListItemText>Trips</ListItemText>
+            </MenuItem>
+
+            <MenuItem component={RouterLink} to="/messages" onClick={onClose}>
+              <ListItemIcon>
+                <ChatBubble fontSize="small" />
+              </ListItemIcon>
+
+              <ListItemText>Messages</ListItemText>
+            </MenuItem>
+          </>
+        )
       ) : (
         <>
           <MenuItem onClick={handleLogin}>
