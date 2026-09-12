@@ -1,3 +1,4 @@
+
 package staycay.models;
 
 import java.time.LocalDateTime;
@@ -13,38 +14,46 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(
-        name = "users", uniqueConstraints = {@UniqueConstraint(name = "uk_users_email", columnNames = "email"), @UniqueConstraint(name = "uk_users_username", columnNames = "username")
+        name = "messages", indexes = {@Index(
+                name = "idx_messages_reservation_created", columnList = "reservation_id, created_at"
+        )
         }
 )
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
+public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String username;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(nullable = false)
-    private String email;
+    @ManyToOne
+    @JoinColumn(name = "reservation_id", nullable = false)
+    private Reservation reservation;
 
-    @Column(nullable = false)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String password;
+    @Column(name = "content", nullable = false)
+    private String content;
+
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
+
 }

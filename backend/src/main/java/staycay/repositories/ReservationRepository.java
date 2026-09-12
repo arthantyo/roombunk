@@ -9,38 +9,33 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import staycay.models.Reservation;
-import staycay.models.ReservationStatus;
+import staycay.models.enums.ReservationStatus;
 
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-	List<Reservation> findByUserId(Long userId);
+    List<Reservation> findByUserId(Long userId);
 
-	List<Reservation> findByRoomId(Long roomId);
+    List<Reservation> findByListingId(Long listingId);
 
     @Query("""
-        SELECT r FROM Reservation r
-        WHERE r.room.id = :roomId
-        AND r.checkInDate < :checkOutDate
-        AND r.checkOutDate > :checkInDate
-    """)
+                SELECT r FROM Reservation r
+                WHERE r.listing.id = :listingId
+                AND r.checkInDate < :checkOutDate
+                AND r.checkOutDate > :checkInDate
+            """)
     List<Reservation> findOverlappingReservations(
-        @Param("roomId") Long roomId,
-        @Param("checkInDate") LocalDate checkInDate,
-        @Param("checkOutDate") LocalDate checkOutDate
+                                                  @Param("listingId") Long listingId, @Param("checkInDate") LocalDate checkInDate, @Param("checkOutDate") LocalDate checkOutDate
     );
 
     @Query("""
-        SELECT r FROM Reservation r
-        WHERE r.room.id = :roomId
-        AND r.status = :status
-        AND r.checkInDate < :checkOutDate
-        AND r.checkOutDate > :checkInDate
-    """)
+                SELECT r FROM Reservation r
+                WHERE r.listing.id = :listingId
+                AND r.status = :status
+                AND r.checkInDate < :checkOutDate
+                AND r.checkOutDate > :checkInDate
+            """)
     List<Reservation> findOverlappingReservationsByStatus(
-        @Param("roomId") Long roomId,
-        @Param("checkInDate") LocalDate checkInDate,
-        @Param("checkOutDate") LocalDate checkOutDate,
-        @Param("status") ReservationStatus status
+                                                          @Param("listingId") Long listingId, @Param("checkInDate") LocalDate checkInDate, @Param("checkOutDate") LocalDate checkOutDate, @Param("status") ReservationStatus status
     );
 }

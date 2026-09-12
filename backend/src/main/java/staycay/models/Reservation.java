@@ -1,6 +1,5 @@
 package staycay.models;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -24,24 +23,24 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import staycay.models.enums.ReservationStatus;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(
-    name = "reservations",
-    indexes = {
-    // because we often query for overlapping reservations 
-    @Index(
-            name = "idx_reservation_room_dates",
-            columnList = "room_id, check_in_date, check_out_date"
-    ),
-    // users always query reservations
-    @Index(
-            name = "idx_reservation_user_created",
-            columnList = "user_id, created_at"
-    )
-})
-@Getter 
+        name = "reservations", indexes = {
+                // Used when checking whether a listing is already booked
+                @Index(
+                        name = "idx_reservation_listing_dates", columnList = "listing_id, check_in_date, check_out_date"
+                ),
+
+                // Used when retrieving a user's reservations
+                @Index(
+                        name = "idx_reservation_user_created", columnList = "user_id, created_at"
+                )
+        }
+)
+@Getter
 @Setter
 @NoArgsConstructor
 public class Reservation {
@@ -54,21 +53,42 @@ public class Reservation {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    @JoinColumn(name = "host_id", nullable = false)
+    private User host;
 
-    @Column(nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "listing_id", nullable = false)
+    private Listing listing;
+
+    @Column(name = "check_in_date", nullable = false)
     private LocalDate checkInDate;
 
-    @Column(nullable = false)
+    @Column(name = "check_out_date", nullable = false)
     private LocalDate checkOutDate;
 
+    @Column(name = "adults", nullable = false)
+    private Integer adults;
+
+    @Column(name = "children", nullable = false)
+    private Integer children;
+
+    @Column(name = "infants", nullable = false)
+    private Integer infants;
+
+    @Column(name = "pets", nullable = false)
+    private Integer pets;
+
+
+    @Column(name = "confirmation_code", nullable = false)
+    private String confirmationCode;
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private ReservationStatus status;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 }

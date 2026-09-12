@@ -19,53 +19,47 @@ import com.stripe.param.PaymentIntentCreateParams;
 import lombok.RequiredArgsConstructor;
 import staycay.dto.CreatePaymentIntentRequest;
 import staycay.dto.PaymentIntentResponse;
-import staycay.models.Room;
+import staycay.models.Listing;
+import staycay.repositories.ListingRepository;
 import staycay.security.UserPrincipal;
-import staycay.services.RoomService;
 
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private static final String CURRENCY = "usd";
+    private static final String CURRENCY = "eur";
 
-    private final RoomService roomService;
+    private final ListingRepository listingRepository;
 
     @PostMapping("/create-intent")
     public ResponseEntity<PaymentIntentResponse> createPaymentIntent(
-            @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody CreatePaymentIntentRequest request) throws StripeException {
+                                                                     @AuthenticationPrincipal UserPrincipal user, @RequestBody CreatePaymentIntentRequest request) throws StripeException {
 
-        Room room = roomService.findRoomById(request.roomId());
-        if (room == null) {
+        Listing listing = listingRepository.findById(request.listingId()).orElse(null);
+        if (listing == null) {
             return ResponseEntity.notFound().build();
         }
 
+        int adults = request.adults() == null ? 0 : request.adults();
+        int children = request.children() == null ? 0 : request.children();
+        int infants = request.infants() == null ? 0 : request.infants();
+        int pets = request.pets() == null ? 0 : request.pets();
+        int payingGuests = adults + children;
+        int includedGuests = listing.getGuests() == null ? 1 : listing.getGuests();
         long nights = ChronoUnit.DAYS.between(request.checkInDate(), request.checkOutDate());
-        if (nights <= 0) {
+        if (nights <= 0 || adults < 1 || children < 0 || infants < 0 || pets < 0 || (listing.getMaxGuests() != null && payingGuests > listing.getMaxGuests()) || (pets > 0 && !Boolean.TRUE.equals(listing.getPetFriendly()))) {
             return ResponseEntity.badRequest().build();
         }
 
-        BigDecimal total = room.getPricePerNight().multiply(BigDecimal.valueOf(nights));
+        int extraGuests = Math.max(0, payingGuests - includedGuests);
+        BigDecimal nightlyPrice = BigDecimal.valueOf(listing.getBasePrice()).add(BigDecimal.valueOf(listing.getExtraGuestPrice() == null ? 0 : listing.getExtraGuestPrice()).multiply(BigDecimal.valueOf(extraGuests)));
+        BigDecimal total = nightlyPrice.multiply(BigDecimal.valueOf(nights));
         long amountInCents = total.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValueExact();
         String idempotencyKey = UUID.randomUUID().toString();
 
-        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                .setAmount(amountInCents)
-                .setCurrency(CURRENCY)
-                .putMetadata("userId", String.valueOf(user.userId()))
-                .putMetadata("hotelId", String.valueOf(request.hotelId()))
-                .putMetadata("roomId", String.valueOf(request.roomId()))
-                .putMetadata("checkInDate", request.checkInDate().toString())
-                .putMetadata("checkOutDate", request.checkOutDate().toString())
-                .putMetadata("holdToken", request.holdToken())
-                .putMetadata("idempotencyKey", idempotencyKey)
-                .setAutomaticPaymentMethods(
-                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                .setEnabled(true)
-                                .build())
-                .build();
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(amountInCents).setCurrency(CURRENCY).putMetadata("userId", String.valueOf(user.userId())).putMetadata("listingId", String.valueOf(request.listingId())).putMetadata("checkInDate", request.checkInDate().toString()).putMetadata("checkOutDate", request.checkOutDate().toString()).putMetadata("adults", String.valueOf(adults)).putMetadata("children", String.valueOf(children)).putMetadata("infants", String.valueOf(infants)).putMetadata("pets", String.valueOf(pets)).putMetadata("idempotencyKey", idempotencyKey).setAutomaticPaymentMethods(
+                PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build()).build();
 
         PaymentIntent paymentIntent = PaymentIntent.create(params);
 

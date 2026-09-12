@@ -3,9 +3,11 @@ package staycay.dto;
 import java.time.LocalDate;
 
 public record CreatePaymentIntentRequest(
-        Long hotelId,
-        Long roomId,
-        LocalDate checkInDate,
-        LocalDate checkOutDate,
-        String holdToken) {
+                                         Long listingId,
+                                         LocalDate checkInDate,
+                                         LocalDate checkOutDate,
+                                         Integer adults,
+                                         Integer children,
+                                         Integer infants,
+                                         Integer pets) {
 }

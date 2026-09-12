@@ -45,20 +45,8 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/hotels/**", "/api/v1/rooms/**").permitAll()
-                        .requestMatchers("/api/v1/reservations/room/*/availability").permitAll()
-                        .requestMatchers("/api/v1/stripe/webhook").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth -> oauth.jwt(
-                        jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
+        http.csrf(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/auth/**").permitAll().requestMatchers("/api/v1/hotels/**", "/api/v1/rooms/**").permitAll().requestMatchers("/api/v1/reservations/listing/*/availability").permitAll().requestMatchers("/api/v1/stripe/webhook").permitAll().anyRequest().authenticated()).oauth2ResourceServer(oauth -> oauth.jwt(
+                jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))).addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 
@@ -66,9 +54,7 @@ public class SecurityConfig {
     // @AuthenticationPrincipal UserPrincipal works in controllers.
     Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         return (Jwt jwt) -> {
-            UserPrincipal principal = userRepository.findByEmail(jwt.getSubject())
-                    .map(UserPrincipal::new)
-                    .orElseThrow(() -> new UsernameNotFoundException(jwt.getSubject()));
+            UserPrincipal principal = userRepository.findByEmail(jwt.getSubject()).map(UserPrincipal::new).orElseThrow(() -> new UsernameNotFoundException(jwt.getSubject()));
             return new UsernamePasswordAuthenticationToken(principal, jwt, principal.getAuthorities());
         };
     }
@@ -88,9 +74,7 @@ public class SecurityConfig {
 
     @Bean
     UserDetailsService userDetailsService() {
-        return email -> userRepository.findByEmail(email)
-                .map(UserPrincipal::new)
-                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(email));
+        return email -> userRepository.findByEmail(email).map(UserPrincipal::new).orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(email));
     }
 
     @Bean
@@ -111,15 +95,12 @@ public class SecurityConfig {
     @Bean
     JwtDecoder jwtDecoder(@Value("${security.jwt.secret}") String secret) {
         return NimbusJwtDecoder.withSecretKey(
-                        new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"))
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
+                new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256")).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
     @Bean
     DaoAuthenticationProvider authenticationProvider(
-            UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
+                                                     UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
