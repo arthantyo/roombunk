@@ -6,10 +6,11 @@ import {
   Skeleton,
   Stack,
   Typography,
-  Zoom,
 } from "@mui/material";
+import { Error } from "../common/Error";
 import { getMyReservations } from "../api/reservations";
 import { formatDateRange } from "../utils/dateFormatter";
+import { NoTrips } from "./NoTrips";
 
 export default function Reservations() {
   const { data, isLoading, isError } = useQuery({
@@ -36,41 +37,7 @@ export default function Reservations() {
         Trips
       </Typography>
 
-      {isError && (
-        <Box
-          sx={{
-            minHeight: 300,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            px: 2,
-          }}
-        >
-          <Zoom in>
-            <Box
-              component="img"
-              src="/images/server-error.png"
-              alt="Server error"
-              sx={{
-                width: "100%",
-                maxWidth: 300,
-                height: "auto",
-                mb: 2,
-              }}
-            />
-          </Zoom>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Something unexpected happened.
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            There was an error while loading your reservations. Please try again
-            later.
-          </Typography>
-        </Box>
-      )}
+      {isError && <Error />}
 
       {isLoading && (
         <Stack spacing={2}>
@@ -80,40 +47,7 @@ export default function Reservations() {
         </Stack>
       )}
 
-      {!isLoading && data?.length === 0 && (
-        <Box
-          sx={{
-            minHeight: 300,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            px: 2,
-          }}
-        >
-          <Zoom in>
-            <Box
-              component="img"
-              src="/images/no-trips.png"
-              alt="No trips"
-              sx={{
-                width: "100%",
-                maxWidth: 300,
-                height: "auto",
-                mb: 2,
-              }}
-            />
-          </Zoom>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            No trips yet
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            When you book a stay, your trips will appear here.
-          </Typography>
-        </Box>
-      )}
+      {!isLoading && data?.length === 0 && <NoTrips />}
 
       <Stack spacing={1}>
         {data?.map((reservation) => (

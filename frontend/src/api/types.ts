@@ -1,3 +1,5 @@
+import type { AmenityType } from "../utils/amenityMap";
+
 export interface HotelDto {
   id: number;
   name: string;
@@ -16,9 +18,18 @@ export interface WishlistDto {
 
 export interface RoomDto {
   id: number;
+  name: string;
+  description: string;
+  address: string;
+
+  propertyType: string;
   roomType: string;
+
   capacity: number;
   pricePerNight: number;
+
+  amenities: AmenityType[];
+
   hotelId: number;
 }
 

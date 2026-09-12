@@ -2,6 +2,8 @@ import { apiFetch } from "./client";
 import { mockResponse, mockRooms, useMockData } from "./mockData";
 import type { RoomDto } from "./types";
 
+export type CreateRoomRequest = Omit<RoomDto, "id">;
+
 export function getRoomsByHotelId(hotelId: number | string) {
   if (useMockData) {
     return mockResponse(
@@ -18,4 +20,15 @@ export function getRoomById(id: number | string) {
   }
 
   return apiFetch<RoomDto>(`/rooms/${id}`);
+}
+
+export function createRoom(room: CreateRoomRequest) {
+  if (useMockData) {
+    return mockResponse({ id: Date.now(), ...room });
+  }
+
+  return apiFetch<RoomDto>("/rooms/", {
+    method: "POST",
+    body: JSON.stringify(room),
+  });
 }

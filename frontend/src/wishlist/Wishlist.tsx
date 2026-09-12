@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Box, Skeleton, Typography, Zoom } from "@mui/material";
 import { getMyWishlists } from "../api/wishlists";
+import { Error } from "../common/Error";
 
 export default function Wishlist() {
   const { data, isLoading, isError } = useQuery({
@@ -38,41 +39,7 @@ export default function Wishlist() {
         Wishlist
       </Typography>
 
-      {isError && (
-        <Box
-          sx={{
-            minHeight: 300,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            px: 2,
-          }}
-        >
-          <Zoom in>
-            <Box
-              component="img"
-              src="/images/server-error.png"
-              alt="Server error"
-              sx={{
-                width: "100%",
-                maxWidth: 300,
-                height: "auto",
-                mb: 2,
-              }}
-            />
-          </Zoom>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Something unexpected happened.
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            There was an error while loading your wishlist. Please try again
-            later.
-          </Typography>
-        </Box>
-      )}
+      {isError && <Error />}
 
       {isLoading && (
         <Box sx={gridSx}>

@@ -4,12 +4,17 @@ export default function PageNotFound() {
   return (
     <Box
       sx={{
+        minHeight: {
+          xs: "calc(100vh - 84px - 72px)",
+          md: "calc(100vh - 84px)",
+        },
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        mt: 4,
-        py: 4,
+        justifyContent: "center",
         px: 2,
+        py: 3,
+        textAlign: "center",
       }}
     >
       <Zoom in>
@@ -20,30 +25,54 @@ export default function PageNotFound() {
           sx={{
             display: "block",
             width: "100%",
-            maxWidth: "500px",
+            maxWidth: {
+              xs: 340,
+              sm: 420,
+              md: 500,
+            },
             height: "auto",
-            mx: "auto",
           }}
         />
       </Zoom>
+
       <Typography
         variant="h2"
-        sx={{ textAlign: "center", mt: 2, fontWeight: 600 }}
+        sx={{
+          mt: 2,
+          fontWeight: 600,
+          fontSize: {
+            xs: "2.2rem",
+            sm: "3rem",
+            md: "3.75rem",
+          },
+        }}
       >
         Bunky is lost!
       </Typography>
-      <Typography variant="h5" sx={{ textAlign: "center", mt: 1 }}>
+
+      <Typography
+        variant="h5"
+        sx={{
+          mt: 1,
+          fontSize: {
+            xs: "1rem",
+            sm: "1.25rem",
+          },
+        }}
+      >
         Oops! The page you're looking for does not exist.
       </Typography>
+
       <ButtonBase
         href="/"
         sx={{
           mt: 3,
           px: 3,
-          py: 2,
+          py: 1.5,
           backgroundColor: "#0f6f5c",
           color: "#fff",
           borderRadius: 20,
+
           "&:hover": {
             backgroundColor: "#0d5e4c",
           },

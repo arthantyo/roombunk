@@ -14,6 +14,11 @@ import Reservations from "./reservations/Reservations.tsx";
 import PageNotFound from "./layout/PageNotFound";
 import Wishlist from "./wishlist/Wishlist.tsx";
 import Precheckout from "./precheckout/Precheckout.tsx";
+import Hosting from "./hosting/Hosting.tsx";
+import Host from "./host/Host.tsx";
+import HotelReservations from "./host/reservations/HostReservations.tsx";
+import HostMessages from "./host/messages/HostMessages.tsx";
+import GuestMessages from "./messages/GuestMessage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +39,12 @@ function App() {
                 <Route path="/reservations" element={<Reservations />} />
                 <Route path="/wishlists" element={<Wishlist />} />
                 <Route path="/book/:id" element={<Precheckout />} />
+                <Route path="/messages" element={<GuestMessages />} />
+
+                <Route path="/host" element={<HotelReservations />} />
+                <Route path="/host/hosting" element={<Hosting />} />
+                <Route path="/host/listings" element={<Host />} />
+                <Route path="/host/messages" element={<HostMessages />} />
               </Route>
               <Route path="*" element={<PageNotFound />} />
             </Route>
