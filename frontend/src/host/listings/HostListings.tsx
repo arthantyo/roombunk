@@ -54,42 +54,6 @@ export default function HostListings() {
 
   const [pricePerNight, setPricePerNight] = useState("");
 
-  //   const mutation = useMutation({
-  //     mutationFn: async () => {
-  //       const hotel = await createHotel({
-  //         ...propertyDetails,
-
-  //         // Add these to your createHotel DTO when
-  //         // your backend supports them:
-  //         //
-  //         // propertyType,
-  //         // placeAccessType,
-  //         // title,
-  //         // description,
-  //         // amenities,
-  //       });
-
-  //       await createRoom({
-  //         hotelId: hotel.id,
-
-  //         guests: roomDetails.guests,
-  //         bedrooms: roomDetails.bedrooms,
-  //         beds: roomDetails.beds,
-  //         bathrooms: roomDetails.bathrooms,
-
-  //         // Add this to your room DTO:
-  //         //
-  //         // pricePerNight: Number(pricePerNight),
-  //       });
-
-  //       return hotel;
-  //     },
-
-  //     onSuccess: () => {
-  //       setActiveStep(hostingSteps.length);
-  //     },
-  //   });
-
   /*
    * Finished
    */

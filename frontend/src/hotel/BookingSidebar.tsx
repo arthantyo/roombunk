@@ -1,8 +1,8 @@
 import { Box, ButtonBase, TextField, Typography } from "@mui/material";
 import { useRef, useState } from "react";
-import type { RoomDto } from "../api/types";
+import { useNavigate } from "react-router-dom";
+import type { ListingDto } from "../api/types";
 import GuestsPopover from "./GuestsPopover";
-import RoomSelectionModal from "./RoomSelectionModal";
 
 function fieldLabelSx(label: string) {
   return {
@@ -29,7 +29,7 @@ const dateInputSx = {
 } as const;
 
 interface BookingSidebarProps {
-  rooms: RoomDto[];
+  listing: ListingDto;
   checkInDate: string;
   checkOutDate: string;
   adults: number;
@@ -37,7 +37,6 @@ interface BookingSidebarProps {
   infants: number;
   pets: boolean;
   minCheckInDate: string;
-  lowestNightlyRate: number | null;
   nights: number;
   onCheckInChange: (value: string) => void;
   onCheckOutChange: (value: string) => void;
@@ -48,7 +47,7 @@ interface BookingSidebarProps {
 }
 
 export default function BookingSidebar({
-  rooms,
+  listing,
   checkInDate,
   checkOutDate,
   adults,
@@ -56,7 +55,6 @@ export default function BookingSidebar({
   infants,
   pets,
   minCheckInDate,
-  lowestNightlyRate,
   nights,
   onCheckInChange,
   onCheckOutChange,
@@ -66,8 +64,8 @@ export default function BookingSidebar({
   onPetsChange,
 }: BookingSidebarProps) {
   const guestFieldRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
   const [guestAnchor, setGuestAnchor] = useState<HTMLElement | null>(null);
-  const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const totalGuests = adults + childrenCount;
   const guestSummaryParts = [
     `${totalGuests} guest${totalGuests === 1 ? "" : "s"}`,
@@ -106,8 +104,8 @@ export default function BookingSidebar({
           mb: 2,
         }}
       >
-        {lowestNightlyRate !== null && nights > 0
-          ? `$${(lowestNightlyRate * nights).toFixed(2)} total`
+        {nights > 0
+          ? `€${(listing.basePrice * nights).toFixed(2)} total`
           : "Choose your dates"}
       </Typography>
 
@@ -193,8 +191,26 @@ export default function BookingSidebar({
         onClose={() => setGuestAnchor(null)}
       />
       <ButtonBase
-        onClick={() => setRoomDialogOpen(true)}
-        disabled={rooms.length === 0}
+        onClick={() =>
+          navigate("/checkout", {
+            state: {
+              listingId: listing.id,
+              listingTitle: listing.title,
+              basePrice: listing.basePrice,
+              checkInDate,
+              checkOutDate,
+              adults,
+              children: childrenCount,
+              infants,
+              pets: pets ? 1 : 0,
+              nights,
+            },
+          })
+        }
+        disabled={
+          nights <= 0 ||
+          (listing.maxGuests != null && totalGuests > listing.maxGuests)
+        }
         aria-haspopup="dialog"
         sx={{
           mt: 2,
@@ -208,15 +224,6 @@ export default function BookingSidebar({
         Reserve
       </ButtonBase>
 
-      <RoomSelectionModal
-        rooms={rooms}
-        nights={nights}
-        checkInDate={checkInDate}
-        checkOutDate={checkOutDate}
-        open={roomDialogOpen}
-        onClose={() => setRoomDialogOpen(false)}
-      />
-
       <Typography
         sx={{
           color: "#555",
@@ -226,7 +233,7 @@ export default function BookingSidebar({
           mt: 1,
         }}
       >
-        Select a room type to reserve
+        Your host will accept or reject the reservation.
       </Typography>
     </Box>
   );

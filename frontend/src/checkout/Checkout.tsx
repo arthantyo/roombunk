@@ -31,59 +31,20 @@ const stripePromise: Promise<Stripe | null> | null = stripePublishableKey
   : null;
 
 interface CheckoutState {
-  holdToken: string;
-  hotelId: number;
-  roomId: number;
+  listingId: number;
+  listingTitle?: string;
+  basePrice?: number;
   checkInDate: string;
   checkOutDate: string;
-  expiresAt?: string;
-  hotelName?: string;
-  roomType?: string;
-  pricePerNight?: number;
+  adults: number;
+  children: number;
+  infants: number;
+  pets: number;
   nights?: number;
 }
 
-function HoldTimer({
-  expiresAt,
-  onExpire,
-}: {
-  expiresAt: string;
-  onExpire: () => void;
-}) {
-  const [remainingMs, setRemainingMs] = useState(
-    () => new Date(expiresAt).getTime() - Date.now(),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRemainingMs(new Date(expiresAt).getTime() - Date.now());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt]);
-
-  useEffect(() => {
-    if (remainingMs <= 0) {
-      onExpire();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remainingMs <= 0]);
-
-  const clamped = Math.max(0, remainingMs);
-  const totalSeconds = Math.floor(clamped / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const isLow = totalSeconds <= 60;
-
-  return (
-    <Alert severity={isLow ? "warning" : "info"} sx={{ mb: 3 }}>
-      Your room is held for {minutes}:{seconds.toString().padStart(2, "0")} more
-      minute(s). Complete payment before the hold expires.
-    </Alert>
-  );
-}
-
 function OrderSummary({ state }: { state: CheckoutState }) {
-  const total = (state.pricePerNight ?? 0) * (state.nights ?? 0);
+  const total = (state.basePrice ?? 0) * (state.nights ?? 0);
   return (
     <Card variant="outlined">
       <CardContent>
@@ -91,14 +52,9 @@ function OrderSummary({ state }: { state: CheckoutState }) {
           Order summary
         </Typography>
         <Stack spacing={1}>
-          {state.hotelName && (
+          {state.listingTitle && (
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {state.hotelName}
-            </Typography>
-          )}
-          {state.roomType && (
-            <Typography variant="body2" color="text.secondary">
-              {state.roomType}
+              {state.listingTitle}
             </Typography>
           )}
           <Typography variant="body2">
@@ -107,13 +63,13 @@ function OrderSummary({ state }: { state: CheckoutState }) {
           <Divider />
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="body2">
-              ${state.pricePerNight?.toFixed(2)} &times; {state.nights} night(s)
+              €{state.basePrice?.toFixed(2)} &times; {state.nights} night(s)
             </Typography>
-            <Typography variant="body2">${total.toFixed(2)}</Typography>
+            <Typography variant="body2">€{total.toFixed(2)}</Typography>
           </Stack>
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="h6">Total</Typography>
-            <Typography variant="h6">${total.toFixed(2)}</Typography>
+            <Typography variant="h6">€{total.toFixed(2)}</Typography>
           </Stack>
         </Stack>
       </CardContent>
@@ -167,7 +123,7 @@ function PaymentForm({ state }: { state: CheckoutState }) {
       >
         {submitting
           ? "Processing..."
-          : `Pay $${((state.pricePerNight ?? 0) * (state.nights ?? 0)).toFixed(2)}`}
+          : `Pay €${((state.basePrice ?? 0) * (state.nights ?? 0)).toFixed(2)}`}
       </Button>
     </Box>
   );
@@ -248,7 +204,6 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [holdExpired, setHoldExpired] = useState(false);
 
   const state = location.state as CheckoutState | null;
   const isReturning = new URLSearchParams(window.location.search).has(
@@ -259,18 +214,20 @@ export default function Checkout() {
     if (isReturning || !state) return;
 
     createPaymentIntent({
-      hotelId: state.hotelId,
-      roomId: state.roomId,
+      listingId: state.listingId,
       checkInDate: state.checkInDate,
       checkOutDate: state.checkOutDate,
-      holdToken: state.holdToken,
+      adults: state.adults,
+      children: state.children,
+      infants: state.infants,
+      pets: state.pets,
     })
       .then((res) => setClientSecret(res.clientSecret))
       .catch((err) =>
         setError(
           err instanceof ApiError
             ? err.message
-            : "Unable to start checkout. Your room hold may have expired.",
+            : "Unable to start checkout. Please check the listing dates and guest details.",
         ),
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -283,7 +240,7 @@ export default function Checkout() {
   if (!state) {
     return (
       <Alert severity="warning">
-        No booking in progress. Please select a room to book from a hotel page.
+        No booking in progress. Please select a listing to book.
       </Alert>
     );
   }
@@ -296,12 +253,10 @@ export default function Checkout() {
     );
   }
 
-  if (error || holdExpired) {
+  if (error) {
     return (
       <Stack spacing={2}>
-        <Alert severity="error">
-          {error ?? "Your room hold has expired. Please start over."}
-        </Alert>
+        <Alert severity="error">{error}</Alert>
         <Button
           variant="outlined"
           onClick={() => navigate(-1)}
@@ -318,12 +273,6 @@ export default function Checkout() {
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>
         Checkout
       </Typography>
-      {state.expiresAt && (
-        <HoldTimer
-          expiresAt={state.expiresAt}
-          onExpire={() => setHoldExpired(true)}
-        />
-      )}
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 5 }}>
           <OrderSummary state={state} />

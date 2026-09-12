@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from "@mui/material";
-import type { Conversation } from "../types";
+import type { Conversation } from "./types";
 
 type Props = {
   conversation: Conversation;

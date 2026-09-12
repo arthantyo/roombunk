@@ -1,36 +1,36 @@
 import type { AmenityType } from "../utils/amenityMap";
 
-export interface HotelDto {
+export interface ListingDto {
   id: number;
-  name: string;
+  title: string;
+  description?: string;
+  propertyType?: string;
+  guestAccess?: string;
   address: string;
   city: string;
-  state: string;
-  zipCode: string;
+  province?: string;
+  postalCode?: string;
   country: string;
+  guests?: number;
+  maxGuests?: number;
+  beds?: number;
+  bathrooms?: number;
+  bedrooms?: number;
+  petFriendly?: boolean;
+  amenities?: AmenityType[];
+  basePrice: number;
+  extraGuestPrice?: number;
+}
+
+export interface WishlistGroupDto {
+  id: number;
+  name: string;
 }
 
 export interface WishlistDto {
   id: number;
-  name: string;
-  hotelIds: number[];
-}
-
-export interface RoomDto {
-  id: number;
-  name: string;
-  description: string;
-  address: string;
-
-  propertyType: string;
-  roomType: string;
-
-  capacity: number;
-  pricePerNight: number;
-
-  amenities: AmenityType[];
-
-  hotelId: number;
+  listing: ListingDto;
+  group: WishlistGroupDto;
 }
 
 export type ReservationStatus =
@@ -42,20 +42,11 @@ export type ReservationStatus =
 export interface ReservationDto {
   id: number;
   userId: number;
-  roomId: number;
+  listingId: number;
   checkInDate: string;
   checkOutDate: string;
   status: ReservationStatus;
   createdAt: string;
-}
-
-export interface ReservationHoldResponse {
-  holdToken: string;
-  hotelId: number;
-  roomId: number;
-  checkInDate: string;
-  checkOutDate: string;
-  expiresAt: string;
 }
 
 export interface PaymentIntentResponse {

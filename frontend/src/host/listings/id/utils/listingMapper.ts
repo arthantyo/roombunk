@@ -1,4 +1,5 @@
 import type { ListingData } from "../../types";
+import type { ListingDto } from "../../../../api/types";
 
 export function createEmptyListing(): ListingData {
   return {
@@ -29,40 +30,36 @@ export function createEmptyListing(): ListingData {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function mapHotelToListing(hotel: any, rooms: any[]): ListingData {
-  const room = rooms?.[0];
-
+export function mapListingToListing(listing: ListingDto): ListingData {
   return {
     propertyType:
-      room?.propertyType === "house" || room?.propertyType === "hotel"
-        ? room.propertyType
+      listing.propertyType === "house" || listing.propertyType === "hotel"
+        ? listing.propertyType
         : "apartment",
 
     placeAccessType: "entire",
 
     propertyDetails: {
-      name: hotel.name ?? "",
-      address: hotel.address ?? "",
-      city: hotel.city ?? "",
-      state: hotel.state ?? "",
-      zipCode: hotel.zipCode ?? "",
-      country: hotel.country ?? "",
+      name: listing.title ?? "",
+      address: listing.address ?? "",
+      city: listing.city ?? "",
+      state: listing.province ?? "",
+      zipCode: listing.postalCode ?? "",
+      country: listing.country ?? "",
     },
 
     roomDetails: {
-      guests: room?.capacity ?? 2,
-      bedrooms: 1,
-      beds: 1,
-      bathrooms: 1,
+      guests: listing.maxGuests ?? listing.guests ?? 2,
+      bedrooms: listing.bedrooms ?? 1,
+      beds: listing.beds ?? 1,
+      bathrooms: listing.bathrooms ?? 1,
     },
 
-    amenities: room?.amenities ?? [],
+    amenities: listing.amenities ?? [],
 
-    title: room?.name ?? hotel.name ?? "",
-    description: room?.description ?? "",
+    title: listing.title ?? "",
+    description: listing.description ?? "",
 
-    pricePerNight: String(room?.pricePerNight ?? 100),
-
-    roomId: room?.id,
+    pricePerNight: String(listing.basePrice ?? 100),
   };
 }

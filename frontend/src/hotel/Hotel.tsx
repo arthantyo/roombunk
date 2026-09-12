@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Box, Button, Divider, Skeleton, Typography } from "@mui/material";
-import { getHotelById } from "../api/hotels";
-import { getRoomsByHotelId } from "../api/rooms";
+import { getListingById } from "../api/listings";
 import BookingSidebar from "./BookingSidebar";
 import { BookmarkBorder, GridView, Star } from "@mui/icons-material";
 import ReviewSummary from "./ReviewSummary";
@@ -26,8 +25,6 @@ export default function Hotel() {
   const { id } = useParams();
   const { isAuthenticated, openAuthModal } = useAuth();
   const [wishlistOpen, setWishlistOpen] = useState(false);
-  // const navigate = useNavigate();
-  // const { isAuthenticated } = useAuth();
 
   const [checkInDate, setCheckInDate] = useState(todayIso());
   const [checkOutDate, setCheckOutDate] = useState(tomorrowIso());
@@ -35,19 +32,10 @@ export default function Hotel() {
   const [childrenCount, setChildrenCount] = useState(0);
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(false);
-  // const [, setSelectedRoom] = useState<RoomDto | null>(null);
-  // const [bookingError, setBookingError] = useState<string | null>(null);
-  // const [, setIsBooking] = useState(false);
 
-  const { data: hotel, isLoading: hotelLoading } = useQuery({
-    queryKey: ["hotel", id],
-    queryFn: () => getHotelById(id!),
-    enabled: !!id,
-  });
-
-  const { data: rooms } = useQuery({
-    queryKey: ["rooms", id],
-    queryFn: () => getRoomsByHotelId(id!),
+  const { data: listing, isLoading: hotelLoading } = useQuery({
+    queryKey: ["listing", id],
+    queryFn: () => getListingById(id!),
     enabled: !!id,
   });
 
@@ -57,14 +45,6 @@ export default function Hotel() {
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
     return diff > 0 ? diff : 0;
   }, [checkInDate, checkOutDate]);
-
-  const lowestNightlyRate = useMemo(() => {
-    if (!rooms || rooms.length === 0) {
-      return null;
-    }
-
-    return Math.min(...rooms.map((room) => Number(room.pricePerNight)));
-  }, [rooms]);
 
   const handleCheckInChange = (value: string) => {
     setCheckInDate(value);
@@ -78,54 +58,6 @@ export default function Hotel() {
       setCheckOutDate(nextDay.toISOString().slice(0, 10));
     }
   };
-
-  // async function handleBook(room: RoomDto) {
-  //   setBookingError(null);
-
-  //   if (!isAuthenticated) {
-  //     navigate("/login", { state: { from: { pathname: `/hotels/${id}` } } });
-  //     return;
-  //   }
-
-  //   if (nights <= 0) {
-  //     setBookingError("Check-out date must be after check-in date.");
-  //     return;
-  //   }
-
-  //   setSelectedRoom(room);
-  //   setIsBooking(true);
-
-  //   try {
-  //     const hold = await createHold({
-  //       room: { id: room.id, hotel: { id: room.hotelId } },
-  //       checkInDate,
-  //       checkOutDate,
-  //     });
-
-  //     navigate("/checkout", {
-  //       state: {
-  //         holdToken: hold.holdToken,
-  //         hotelId: hold.hotelId,
-  //         roomId: hold.roomId,
-  //         checkInDate: hold.checkInDate,
-  //         checkOutDate: hold.checkOutDate,
-  //         expiresAt: hold.expiresAt,
-  //         hotelName: hotel?.name,
-  //         roomType: room.roomType,
-  //         pricePerNight: room.pricePerNight,
-  //         nights,
-  //       },
-  //     });
-  //   } catch (err) {
-  //     setBookingError(
-  //       err instanceof ApiError
-  //         ? err.message
-  //         : "This room is unavailable for the selected dates. Please try different dates.",
-  //     );
-  //   } finally {
-  //     setIsBooking(false);
-  //   }
-  // }
 
   const galleryImages = useMemo(
     () => [
@@ -216,7 +148,7 @@ export default function Hotel() {
     );
   }
 
-  if (!hotel) {
+  if (!listing) {
     return <PageNotFound />;
   }
 
@@ -241,7 +173,7 @@ export default function Hotel() {
             fontSize: { xs: "2rem", md: "2.4rem" },
           }}
         >
-          {hotel.name}
+          {listing.title}
         </Typography>
 
         <Button
@@ -278,8 +210,8 @@ export default function Hotel() {
       </Box>
 
       <WishlistModal
-        hotelId={hotel.id}
-        hotelName={hotel.name}
+        listingId={listing.id}
+        listingName={listing.title}
         open={wishlistOpen}
         onClose={() => setWishlistOpen(false)}
       />
@@ -306,7 +238,7 @@ export default function Hotel() {
           <Box
             component="img"
             src={galleryImages[0]}
-            alt={hotel.name}
+            alt={listing.title}
             sx={{
               width: "100%",
               height: "100%",
@@ -352,7 +284,7 @@ export default function Hotel() {
               key={`${image}-${index}`}
               component="img"
               src={image}
-              alt={`${hotel.name} photo ${index + 1}`}
+              alt={`${listing.title} photo ${index + 1}`}
               sx={{
                 width: "100%",
                 height: "100%",
@@ -404,7 +336,7 @@ export default function Hotel() {
                   fontSize: { xs: "1.6rem", md: "1.8rem" },
                 }}
               >
-                Hotel in {hotel.city}, {hotel.country}
+                {listing.title} in {listing.city}, {listing.country}
               </Typography>
 
               {/* rating */}
@@ -441,9 +373,8 @@ export default function Hotel() {
                   lineHeight: 1.6,
                 }}
               >
-                Located in the creative {hotel.city} area, this hotel blends
-                comfort, modern rooms, and a welcoming shared-lounge atmosphere
-                for longer stays and city breaks.
+                {listing.description ||
+                  `Stay in ${listing.city}, ${listing.country}.`}
               </Typography>
             </Box>
           </Box>
@@ -469,7 +400,7 @@ export default function Hotel() {
           }}
         >
           <BookingSidebar
-            rooms={rooms ?? []}
+            listing={listing}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
             adults={adults}
@@ -477,7 +408,6 @@ export default function Hotel() {
             infants={infants}
             pets={pets}
             minCheckInDate={todayIso()}
-            lowestNightlyRate={lowestNightlyRate}
             nights={nights}
             onCheckInChange={handleCheckInChange}
             onCheckOutChange={setCheckOutDate}

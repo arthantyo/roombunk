@@ -3,36 +3,27 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Box, CircularProgress } from "@mui/material";
 
-import { getHotelById } from "../../../api/hotels";
-import { getRoomsByHotelId } from "../../../api/rooms";
+import { getListingById } from "../../../api/listings";
 
 import { ListingEditor } from "./components/ListingEditor";
-import { createEmptyListing, mapHotelToListing } from "./utils/listingMapper";
+import { createEmptyListing, mapListingToListing } from "./utils/listingMapper";
 
 export default function HostListingDetail() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: hotel, isLoading: hotelLoading } = useQuery({
-    queryKey: ["hotel", id],
-    queryFn: () => getHotelById(id!),
+  const { data: listingDto, isLoading } = useQuery({
+    queryKey: ["listing", id],
+    queryFn: () => getListingById(id!),
     enabled: !!id,
   });
-
-  const { data: rooms = [], isLoading: roomsLoading } = useQuery({
-    queryKey: ["rooms", id],
-    queryFn: () => getRoomsByHotelId(id!),
-    enabled: !!id,
-  });
-
-  const isLoading = hotelLoading || roomsLoading;
 
   const initialData = useMemo(() => {
-    if (!hotel) {
+    if (!listingDto) {
       return null;
     }
 
-    return mapHotelToListing(hotel, rooms);
-  }, [hotel, rooms]);
+    return mapListingToListing(listingDto);
+  }, [listingDto]);
 
   if (!id || isLoading) {
     return <LoadingState />;

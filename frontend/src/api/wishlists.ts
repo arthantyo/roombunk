@@ -1,31 +1,32 @@
 import { apiFetch } from "./client";
-import type { WishlistDto } from "./types";
+import type { WishlistDto, WishlistGroupDto } from "./types";
 
-export interface CreateWishlistRequest {
+export interface CreateWishlistGroupRequest {
   name: string;
-  hotelId: number;
 }
 
-export interface AddHotelToWishlistRequest {
-  hotelId: number;
+export interface AddListingToWishlistRequest {
+  listingId: number;
+  groupId: number;
 }
 
 export function getMyWishlists() {
   return apiFetch<WishlistDto[]>("/wishlist");
 }
 
-export function createWishlist(request: CreateWishlistRequest) {
-  return apiFetch<WishlistDto>("/wishlist", {
+export function getMyWishlistGroups() {
+  return apiFetch<WishlistGroupDto[]>("/wishlist/groups");
+}
+
+export function createWishlistGroup(request: CreateWishlistGroupRequest) {
+  return apiFetch<WishlistGroupDto>("/wishlist/groups", {
     method: "POST",
     body: JSON.stringify(request),
   });
 }
 
-export function addHotelToWishlist(
-  wishlistId: number,
-  request: AddHotelToWishlistRequest,
-) {
-  return apiFetch<WishlistDto>(`/wishlist/${wishlistId}/hotels`, {
+export function addListingToWishlist(request: AddListingToWishlistRequest) {
+  return apiFetch<WishlistDto>("/wishlist", {
     method: "POST",
     body: JSON.stringify(request),
   });

@@ -2,11 +2,13 @@ import { apiFetch } from "./client";
 import type { PaymentIntentResponse } from "./types";
 
 export interface CreatePaymentIntentRequest {
-  hotelId: number;
-  roomId: number;
+  listingId: number;
   checkInDate: string;
   checkOutDate: string;
-  holdToken: string;
+  adults: number;
+  children: number;
+  infants: number;
+  pets: number;
 }
 
 export function createPaymentIntent(request: CreatePaymentIntentRequest) {

@@ -1,7 +1,7 @@
 import { Box, Chip, Stack, Typography } from "@mui/material";
 
 import { ConversationListItem } from "./ConversationListItem";
-import type { Conversation } from "../types";
+import type { Conversation } from "./types";
 
 type Props = {
   conversations: Conversation[];

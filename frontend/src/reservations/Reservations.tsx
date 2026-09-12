@@ -23,6 +23,7 @@ export default function Reservations() {
       sx={{
         maxWidth: 800,
         mx: "auto",
+        px: { xs: 2, sm: 3 },
       }}
     >
       <Typography
@@ -97,7 +98,7 @@ export default function Reservations() {
                     fontWeight: 600,
                   }}
                 >
-                  Room {reservation.roomId}
+                  Listing {reservation.listingId}
                 </Typography>
 
                 <Typography

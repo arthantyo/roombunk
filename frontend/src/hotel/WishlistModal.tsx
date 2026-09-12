@@ -20,20 +20,20 @@ import { useState } from "react";
 
 import { ApiError } from "../api/client";
 import {
-  addHotelToWishlist,
-  createWishlist,
-  getMyWishlists,
+  addListingToWishlist,
+  createWishlistGroup,
+  getMyWishlistGroups,
 } from "../api/wishlists";
 
 interface WishlistModalProps {
-  hotelId: number;
-  hotelName: string;
+  listingId: number;
+  listingName: string;
   open: boolean;
   onClose: () => void;
 }
 
 export default function WishlistModal({
-  hotelId,
+  listingId,
   open,
   onClose,
 }: WishlistModalProps) {
@@ -49,8 +49,8 @@ export default function WishlistModal({
     isLoading,
     error: wishlistError,
   } = useQuery({
-    queryKey: ["wishlists"],
-    queryFn: getMyWishlists,
+    queryKey: ["wishlist-groups"],
+    queryFn: getMyWishlistGroups,
     enabled: open,
   });
 
@@ -59,26 +59,17 @@ export default function WishlistModal({
   const saveMutation = useMutation({
     mutationFn: async () => {
       const trimmedName = newWishlistName.trim();
-
-      if (trimmedName) {
-        return createWishlist({
-          name: trimmedName,
-          hotelId,
-        });
-      }
-
       if (effectiveSelectedId === null) {
-        throw new Error("Select a wishlist first.");
+        if (!trimmedName) throw new Error("Create a group first.");
+        const group = await createWishlistGroup({ name: trimmedName });
+        return addListingToWishlist({ listingId, groupId: group.id });
       }
-
-      return addHotelToWishlist(effectiveSelectedId, {
-        hotelId,
-      });
+      return addListingToWishlist({ listingId, groupId: effectiveSelectedId });
     },
 
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["wishlists"],
+        queryKey: ["wishlist-groups"],
       });
 
       setSelectedId(null);
@@ -212,7 +203,7 @@ export default function WishlistModal({
                         fontSize: "0.8rem",
                       }}
                     >
-                      {wishlist.hotelIds.length} saved
+                      Wishlist folder
                     </Typography>
                   </Box>
 

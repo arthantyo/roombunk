@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Box } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import type { ListingData } from "../../types";
-import { updateHotel } from "../../../../api/hotels";
-import { updateRoom } from "../../../../api/rooms";
+import { updateListing } from "../../../../api/listings";
 import { HostingSuccessListing } from "../../components/HostingSuccessListing";
 import { hostingSteps } from "../../constants";
 import { ListingEditorHeader } from "./ListingEditorHeader";
@@ -39,19 +38,22 @@ export function ListingEditor({ id, initialData }: Props) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await updateHotel(id, propertyDetails);
-
-      if (!initialData.roomId) {
-        return;
-      }
-
-      await updateRoom(initialData.roomId, {
-        name: title,
+      await updateListing(id, {
+        title,
         description,
-        pricePerNight: Number(pricePerNight) || 100,
-        capacity: roomDetails.guests,
+        basePrice: Number(pricePerNight) || 100,
+        maxGuests: roomDetails.guests,
+        guests: roomDetails.guests,
+        bedrooms: roomDetails.bedrooms,
+        beds: roomDetails.beds,
+        bathrooms: roomDetails.bathrooms,
         amenities,
         propertyType,
+        address: propertyDetails.address,
+        city: propertyDetails.city,
+        province: propertyDetails.state,
+        postalCode: propertyDetails.zipCode,
+        country: propertyDetails.country,
       });
     },
 
@@ -73,7 +75,7 @@ export function ListingEditor({ id, initialData }: Props) {
   };
 
   if (activeStep === hostingSteps.length) {
-    return <HostingSuccessListing  />;
+    return <HostingSuccessListing />;
   }
 
   return (

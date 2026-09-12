@@ -25,6 +25,7 @@ export default function Wishlist() {
       sx={{
         maxWidth: 800,
         mx: "auto",
+        px: { xs: 2, sm: 3 },
       }}
     >
       <Typography
@@ -69,7 +70,7 @@ export default function Wishlist() {
       {!isLoading && data?.length === 0 && (
         <Box
           sx={{
-            minHeight: 300,
+            minHeight: 420,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -85,17 +86,24 @@ export default function Wishlist() {
               alt="No wishlists"
               sx={{
                 width: "100%",
-                maxWidth: 300,
+                maxWidth: 260,
                 height: "auto",
-                mb: 2,
+                mb: 3,
               }}
             />
           </Zoom>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
             No wishes yet
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{
+              mt: 1,
+              maxWidth: 500,
+            }}
+          >
             When you add a wish, it will appear here.
           </Typography>
         </Box>

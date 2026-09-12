@@ -27,7 +27,6 @@ export type ListingData = {
   title: string;
   description: string;
   pricePerNight: string;
-  roomId?: number;
 };
 
 export type PlaceAccessType = "entire" | "private-room" | "shared-room";
