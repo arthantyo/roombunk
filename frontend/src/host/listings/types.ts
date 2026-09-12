@@ -1,3 +1,5 @@
+import type { AmenityType } from "../../utils/amenityMap";
+
 export type PropertyType = "apartment" | "house" | "hotel";
 
 export type PropertyDetails = {
@@ -14,6 +16,18 @@ export type RoomDetails = {
   bedrooms: number;
   beds: number;
   bathrooms: number;
+};
+
+export type ListingData = {
+  propertyType: PropertyType;
+  placeAccessType: PlaceAccessType;
+  propertyDetails: PropertyDetails;
+  roomDetails: RoomDetails;
+  amenities: AmenityType[];
+  title: string;
+  description: string;
+  pricePerNight: string;
+  roomId?: number;
 };
 
 export type PlaceAccessType = "entire" | "private-room" | "shared-room";

@@ -14,7 +14,8 @@ import Reservations from "./reservations/Reservations.tsx";
 import PageNotFound from "./layout/PageNotFound";
 import Wishlist from "./wishlist/Wishlist.tsx";
 import Precheckout from "./precheckout/Precheckout.tsx";
-import Hosting from "./hosting/Hosting.tsx";
+import Hosting from "./host/listings/HostListings.tsx";
+import HostListingDetail from "./host/listings/id/HostListingDetail.tsx";
 import Host from "./host/Host.tsx";
 import HotelReservations from "./host/reservations/HostReservations.tsx";
 import HostMessages from "./host/messages/HostMessages.tsx";
@@ -42,8 +43,16 @@ function App() {
                 <Route path="/messages" element={<GuestMessages />} />
 
                 <Route path="/host" element={<HotelReservations />} />
-                <Route path="/host/hosting" element={<Hosting />} />
+                <Route path="/host/create" element={<Hosting />} />
                 <Route path="/host/listings" element={<Host />} />
+                <Route
+                  path="/host/listing/:id"
+                  element={<HostListingDetail />}
+                />
+                <Route
+                  path="/host/listings/:id"
+                  element={<HostListingDetail />}
+                />
                 <Route path="/host/messages" element={<HostMessages />} />
               </Route>
               <Route path="*" element={<PageNotFound />} />

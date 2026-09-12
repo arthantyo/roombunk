@@ -41,7 +41,7 @@ export function HostingSuccessListing() {
 
       <Button
         component={RouterLink}
-        to="/host"
+        to="/host/listings"
         variant="contained"
         sx={{
           bgcolor: "#0f6f5c",

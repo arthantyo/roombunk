@@ -32,3 +32,19 @@ export function createRoom(room: CreateRoomRequest) {
     body: JSON.stringify(room),
   });
 }
+
+export function updateRoom(id: number | string, room: Partial<RoomDto>) {
+  if (useMockData) {
+    const existing = mockRooms.find((r) => r.id === Number(id));
+    if (existing) {
+      Object.assign(existing, room);
+      return mockResponse(existing);
+    }
+    return mockResponse({ id: Number(id), ...room } as RoomDto);
+  }
+
+  return apiFetch<RoomDto>(`/rooms/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(room),
+  });
+}

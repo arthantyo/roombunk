@@ -6,7 +6,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { amenityMap, type AmenityType } from "../../utils/amenityMap";
+import { amenityMap, type AmenityType } from "../../../utils/amenityMap";
 
 type Props = {
   value: AmenityType[];

@@ -7,13 +7,13 @@ type Props = {
 };
 
 export function MessageBubble({ message, currentUserRole }: Props) {
-  const isHost = currentUserRole === "host";
+  const isOwnMessage = message.sender === currentUserRole;
 
   return (
     <Box
       sx={{
         display: "flex",
-        justifyContent: isHost ? "flex-end" : "flex-start",
+        justifyContent: isOwnMessage ? "flex-end" : "flex-start",
       }}
     >
       <Box
@@ -30,10 +30,12 @@ export function MessageBubble({ message, currentUserRole }: Props) {
           sx={{
             display: "block",
             mb: 0.5,
-            textAlign: isHost ? "right" : "left",
+            textAlign: isOwnMessage ? "right" : "left",
           }}
         >
-          {isHost ? message.time : `Guest · ${message.time}`}
+          {isOwnMessage
+            ? message.time
+            : `${message.sender === "host" ? "Host" : "Guest"} · ${message.time}`}
         </Typography>
 
         <Paper
@@ -42,8 +44,8 @@ export function MessageBubble({ message, currentUserRole }: Props) {
             px: 2.5,
             py: 1.75,
             borderRadius: 3,
-            bgcolor: isHost ? "#3d3d3d" : "white",
-            color: isHost ? "#fff" : "text.primary",
+            bgcolor: isOwnMessage ? "#3d3d3d" : "white",
+            color: isOwnMessage ? "#fff" : "text.primary",
           }}
         >
           <Typography>{message.text}</Typography>

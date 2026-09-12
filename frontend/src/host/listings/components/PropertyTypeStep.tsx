@@ -19,7 +19,7 @@ type Props = {
 export default function PropertyTypeStep({ value, onChange, onNext }: Props) {
   return (
     <Stack spacing={2}>
-      <Typography variant="h6" sx={{ fontWeight: 500 }}>
+      <Typography variant="h5" sx={{ fontWeight: 500 }}>
         Which of these best describes your place?
       </Typography>
 

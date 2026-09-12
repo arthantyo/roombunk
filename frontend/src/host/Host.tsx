@@ -56,7 +56,7 @@ export default function Host() {
 
           <IconButton
             component={RouterLink}
-            to="/host/hosting"
+            to="/host/create"
             sx={{
               flexShrink: 0,
               bgcolor: "primary.main",

@@ -47,7 +47,7 @@ export default function PlaceAccessStep({
 }: Props) {
   return (
     <Stack spacing={3}>
-      <Typography variant="h6" sx={{ fontWeight: 500 }}>
+      <Typography variant="h5" sx={{ fontWeight: 500 }}>
         What type of place will guests have?
       </Typography>
 

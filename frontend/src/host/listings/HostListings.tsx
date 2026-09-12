@@ -1,17 +1,10 @@
 import { useState } from "react";
 
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 import { hostingSteps } from "./constants";
 
-import type {
-  PlaceAccessType,
-  PropertyDetails,
-  PropertyType,
-  RoomDetails,
-} from "./types";
-
-import type { AmenityType } from "../utils/amenityMap";
+import type { AmenityType } from "../../utils/amenityMap";
 
 import PropertyTypeStep from "./components/PropertyTypeStep";
 import PlaceAccessStep from "./components/PlaceAccessStep";
@@ -22,8 +15,14 @@ import TitleStep from "./components/TitleStep";
 import DescriptionStep from "./components/DescriptionStep";
 import PricingStep from "./components/PricingStep";
 import { HostingSuccessListing } from "./components/HostingSuccessListing";
+import type {
+  PropertyType,
+  PlaceAccessType,
+  PropertyDetails,
+  RoomDetails,
+} from "./types";
 
-export default function Hosting() {
+export default function HostListings() {
   const [activeStep, setActiveStep] = useState(0);
 
   const [propertyType, setPropertyType] = useState<PropertyType>("apartment");
@@ -114,38 +113,6 @@ export default function Hosting() {
         },
       }}
     >
-      <Typography
-        variant="h4"
-        sx={{
-          mb: 1,
-          mt: {
-            xs: 3,
-            md: 5,
-          },
-          fontWeight: 500,
-          letterSpacing: -0.8,
-          fontSize: {
-            xs: "1.7rem",
-            sm: "2rem",
-          },
-        }}
-      >
-        List your place
-      </Typography>
-
-      <Typography
-        color="text.secondary"
-        sx={{
-          mb: {
-            xs: 3,
-            md: 5,
-          },
-        }}
-      >
-        Step {activeStep + 1} of {hostingSteps.length}:{" "}
-        {hostingSteps[activeStep]}
-      </Typography>
-
       {/*
        * 0 - Property type
        */}

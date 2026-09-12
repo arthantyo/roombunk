@@ -75,9 +75,14 @@ const roomTypes = [
 export const mockRooms: RoomDto[] = mockHotels.flatMap((hotel) =>
   roomTypes.map((room, index) => ({
     id: hotel.id * 10 + index + 1,
+    name: `${room.suffix} ${hotel.name.split(" ")[0]} Room`,
+    description: `A lovely ${room.suffix.toLowerCase()} room in ${hotel.city} with great amenities.`,
+    address: hotel.address,
+    propertyType: "apartment",
     roomType: `${room.suffix} ${hotel.name.split(" ")[0]} Room`,
     capacity: room.capacity,
     pricePerNight: room.price + (hotel.id % 3) * 15,
+    amenities: ["WIFI", "KITCHEN", "TV", "AIR_CONDITIONING"],
     hotelId: hotel.id,
   })),
 );

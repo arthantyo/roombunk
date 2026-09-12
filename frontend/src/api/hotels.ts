@@ -37,3 +37,19 @@ export function createHotel(hotel: CreateHotelRequest) {
     body: JSON.stringify(hotel),
   });
 }
+
+export function updateHotel(id: number | string, hotel: Partial<HotelDto>) {
+  if (useMockData) {
+    const existing = mockHotels.find((h) => h.id === Number(id));
+    if (existing) {
+      Object.assign(existing, hotel);
+      return mockResponse(existing);
+    }
+    return mockResponse({ id: Number(id), ...hotel } as HotelDto);
+  }
+
+  return apiFetch<HotelDto>(`/hotels/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(hotel),
+  });
+}

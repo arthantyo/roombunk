@@ -1,4 +1,4 @@
-import { Button, Stack, TextField } from "@mui/material";
+import { Button, Stack, TextField, Typography } from "@mui/material";
 
 import type { PropertyDetails } from "../types";
 
@@ -26,6 +26,10 @@ export default function PropertyDetailsStep({
 
   return (
     <Stack spacing={2}>
+      <Typography variant="h5" sx={{ fontWeight: 500 }}>
+        Please provide the details of your property.
+      </Typography>
+
       <TextField
         label="Property name"
         value={value.name}

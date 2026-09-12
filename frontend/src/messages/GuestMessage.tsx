@@ -48,7 +48,7 @@ const initialMessages: Record<string, Message[]> = {
     },
     {
       id: "2",
-      sender: "guest",
+      sender: "host",
       text: "Great. What time is check-out?",
       time: "12:51 PM",
     },

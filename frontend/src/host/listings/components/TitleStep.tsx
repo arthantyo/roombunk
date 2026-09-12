@@ -7,23 +7,14 @@ type Props = {
   onNext: () => void;
 };
 
-const MAX_LENGTH = 500;
+const MAX_LENGTH = 50;
 
-export default function DescriptionStep({
-  value,
-  onChange,
-  onBack,
-  onNext,
-}: Props) {
+export default function TitleStep({ value, onChange, onBack, onNext }: Props) {
   return (
-    <Stack spacing={4}>
+    <Stack spacing={2}>
       <Box>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-          Create your description
-        </Typography>
-
-        <Typography color="text.secondary">
-          Share what makes your place special.
+        <Typography variant="h5" sx={{ fontWeight: 500 }}>
+          Now, let's give your place a title
         </Typography>
       </Box>
 
@@ -31,9 +22,9 @@ export default function DescriptionStep({
         value={value}
         onChange={(e) => onChange(e.target.value.slice(0, MAX_LENGTH))}
         multiline
-        minRows={6}
+        minRows={3}
         fullWidth
-        placeholder="Tell guests about your place..."
+        placeholder="Cozy apartment in the city center"
         slotProps={{
           htmlInput: {
             maxLength: MAX_LENGTH,
