@@ -31,14 +31,6 @@ export default function PropertyDetailsStep({
       </Typography>
 
       <TextField
-        label="Property name"
-        value={value.name}
-        onChange={(e) => update("name", e.target.value)}
-        fullWidth
-        required
-      />
-
-      <TextField
         label="Address"
         value={value.address}
         onChange={(e) => update("address", e.target.value)}

@@ -3,7 +3,6 @@ import type { AmenityType } from "../../utils/amenityMap";
 export type PropertyType = "apartment" | "house" | "hotel";
 
 export type PropertyDetails = {
-  name: string;
   address: string;
   city: string;
   state: string;

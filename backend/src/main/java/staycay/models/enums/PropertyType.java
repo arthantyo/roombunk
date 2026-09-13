@@ -1,5 +1,5 @@
 package staycay.models.enums;
 
 public enum PropertyType {
-    APARTMENT, HOUSE, STUDIO,
+    APARTMENT, HOUSE, STUDIO, HOTEL
 }

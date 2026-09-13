@@ -1,20 +1,10 @@
 import { ListingCardSkeleton } from "./ListingCardSkeleton";
 import { useQuery } from "@tanstack/react-query";
-import { Link as RouterLink, useSearchParams } from "react-router-dom";
-import { BookmarkBorder } from "@mui/icons-material";
-import { Grow, IconButton, Zoom } from "@mui/material";
-import {
-  Box,
-  Card,
-  CardMedia,
-  Pagination,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import { Grow, Zoom } from "@mui/material";
+import { Box, Pagination, Stack, Typography } from "@mui/material";
 import { getListings } from "../api/listings";
 import type { ListingDto } from "../api/types";
-import WishlistModal from "../hotel/WishlistModal";
-import { useAuth } from "../auth/useAuth";
 import { useState, useMemo } from "react";
 import { ListingCard } from "./ListingCard";
 

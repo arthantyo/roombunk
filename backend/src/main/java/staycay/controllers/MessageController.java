@@ -1,5 +1,6 @@
 package staycay.controllers;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -27,23 +28,38 @@ public class MessageController {
     private final UserRepository userRepository;
 
     @GetMapping("/reservation/{reservationId}")
-    public ResponseEntity<List<Message>> getMessages(@PathVariable Long reservationId) {
-        return ResponseEntity.ok(messageRepository.findByReservationIdOrderByCreatedAtAsc(reservationId));
+    public ResponseEntity<List<MessageResponse>> getMessages(
+                                                             @PathVariable Long reservationId, @AuthenticationPrincipal UserPrincipal principal) {
+        var reservation = reservationRepository.findById(reservationId).orElse(null);
+        if (!canAccess(reservation, principal.userId())) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(messageRepository.findByReservationIdOrderByCreatedAtAsc(reservationId).stream().map(MessageResponse::from).toList());
     }
 
     @PostMapping
-    public ResponseEntity<Message> sendMessage(
-                                               @AuthenticationPrincipal UserPrincipal principal, @RequestBody CreateMessageRequest request) {
+    public ResponseEntity<MessageResponse> sendMessage(
+                                                       @AuthenticationPrincipal UserPrincipal principal, @RequestBody CreateMessageRequest request) {
         var reservation = reservationRepository.findById(request.reservationId()).orElse(null);
         var user = userRepository.findById(principal.userId()).orElse(null);
-        if (reservation == null || user == null || request.content() == null || request.content().isBlank()) {
+        if (!canAccess(reservation, principal.userId()) || user == null || request.content() == null || request.content().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         Message message = new Message();
         message.setReservation(reservation);
         message.setUser(user);
         message.setContent(request.content().trim());
-        return ResponseEntity.ok(messageRepository.save(message));
+        return ResponseEntity.ok(MessageResponse.from(messageRepository.save(message)));
+    }
+
+    private boolean canAccess(staycay.models.Reservation reservation, Long userId) {
+        return reservation != null && ((reservation.getUser() != null && reservation.getUser().getId().equals(userId)) || (reservation.getHost() != null && reservation.getHost().getId().equals(userId)));
+    }
+
+    public record MessageResponse(Long id, Long userId, String content, LocalDateTime createdAt) {
+        static MessageResponse from(Message message) {
+            return new MessageResponse(message.getId(), message.getUser().getId(), message.getContent(), message.getCreatedAt());
+        }
     }
 
     public record CreateMessageRequest(Long reservationId, String content) {

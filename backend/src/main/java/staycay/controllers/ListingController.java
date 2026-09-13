@@ -3,6 +3,7 @@ package staycay.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,12 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import staycay.models.Listing;
 import staycay.repositories.ListingRepository;
+import staycay.repositories.UserRepository;
+import staycay.security.UserPrincipal;
 
 @RestController
 @RequestMapping("/api/v1/listings")
 @RequiredArgsConstructor
 public class ListingController {
     private final ListingRepository listingRepository;
+    private final UserRepository userRepository;
 
     @GetMapping
     public List<Listing> getListings() {
@@ -33,8 +37,14 @@ public class ListingController {
     }
 
     @PostMapping
-    public Listing createListing(@RequestBody Listing listing) {
-        return listingRepository.save(listing);
+    public ResponseEntity<Listing> createListing(@RequestBody Listing listing, @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal != null) {
+            userRepository.findById(principal.userId()).ifPresent(listing::setHost);
+        }
+        if (listing.getHost() == null) {
+            userRepository.findAll().stream().findFirst().ifPresent(listing::setHost);
+        }
+        return ResponseEntity.ok(listingRepository.save(listing));
     }
 
     @PutMapping("/{id}")

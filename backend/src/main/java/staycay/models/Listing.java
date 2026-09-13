@@ -1,12 +1,19 @@
 
 package staycay.models;
 
+import java.time.LocalDateTime;
 import java.util.Set;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -21,9 +28,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import staycay.models.enums.AmenityType;
 import staycay.models.enums.GuestAccessType;
+import staycay.models.enums.ListingStatus;
 import staycay.models.enums.PropertyType;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "listings")
 @Getter
 @Setter
@@ -93,6 +102,18 @@ public class Listing {
 
     @Column(name = "max_guests")
     private Integer maxGuests;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private ListingStatus status;
+
+    @Column(name = "verified")
+    private Boolean verified;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "host_id", nullable = false)

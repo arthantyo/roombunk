@@ -1,4 +1,5 @@
 import type { AmenityType } from "../utils/amenityMap";
+export type ListingStatus = "DRAFT" | "LIVE";
 
 export interface ListingDto {
   id: number;
@@ -20,6 +21,9 @@ export interface ListingDto {
   amenities?: AmenityType[];
   basePrice: number;
   extraGuestPrice?: number;
+  status: ListingStatus;
+
+  verified?: boolean;
 }
 
 export interface WishlistGroupDto {

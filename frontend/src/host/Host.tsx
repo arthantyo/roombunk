@@ -1,26 +1,51 @@
 import { Add } from "@mui/icons-material";
-import { Box, IconButton, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
+
+import { getListings } from "../api/listings";
 import { EmptyListings } from "./components/EmptyCard";
 import { ListingCard } from "./components/ListingCard";
 import type { HostListing } from "./types";
 
-const listings: HostListing[] = [
-  {
-    id: 1,
-    title: "Modern apartment in Groningen",
-    location: "Groningen, Netherlands",
-    status: "LIVE",
-  },
-  {
-    id: 2,
-    title: "Cozy studio near the city centre",
-    location: "Groningen, Netherlands",
-    status: "DRAFT",
-  },
-];
-
 export default function Host() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["listings"],
+    queryFn: getListings,
+  });
+
+  const listings: HostListing[] =
+    data?.map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      location: `${listing.city}, ${listing.country}`,
+      status: listing.status,
+      verified: listing.verified,
+      basePrice: listing.basePrice,
+      extraGuestPrice: listing.extraGuestPrice,
+      maxGuests: listing.maxGuests,
+      beds: listing.beds,
+      bathrooms: listing.bathrooms,
+      bedrooms: listing.bedrooms,
+      petFriendly: listing.petFriendly,
+      amenities: listing.amenities,
+      propertyType: listing.propertyType,
+      guestAccess: listing.guestAccess,
+      address: listing.address,
+      city: listing.city,
+      province: listing.province,
+      postalCode: listing.postalCode,
+      country: listing.country,
+      description: listing.description,
+    })) ?? [];
+
   return (
     <Box
       sx={{
@@ -69,7 +94,6 @@ export default function Host() {
                 xs: 30,
                 sm: 38,
               },
-
               "&:hover": {
                 bgcolor: "primary.dark",
               },
@@ -79,7 +103,19 @@ export default function Host() {
           </IconButton>
         </Stack>
 
-        {listings.length === 0 ? (
+        {isLoading ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 8,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : isError ? (
+          <Alert severity="error">Unable to load your listings.</Alert>
+        ) : listings.length === 0 ? (
           <EmptyListings />
         ) : (
           <Box

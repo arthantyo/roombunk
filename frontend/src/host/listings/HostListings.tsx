@@ -1,8 +1,9 @@
 import { useState } from "react";
-
-import { Box } from "@mui/material";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Alert, Box, CircularProgress } from "@mui/material";
 
 import { hostingSteps } from "./constants";
+import { createListing } from "../../api/listings";
 
 import type { AmenityType } from "../../utils/amenityMap";
 
@@ -22,7 +23,34 @@ import type {
   RoomDetails,
 } from "./types";
 
+function mapPropertyType(type: PropertyType): string {
+  switch (type) {
+    case "apartment":
+      return "APARTMENT";
+    case "house":
+      return "HOUSE";
+    case "hotel":
+      return "HOTEL";
+    default:
+      return String(type).toUpperCase();
+  }
+}
+
+function mapGuestAccess(access: PlaceAccessType): string {
+  switch (access) {
+    case "entire":
+      return "ENTIRE_PLACE";
+    case "private-room":
+      return "PRIVATE_ROOM";
+    case "shared-room":
+      return "SHARED_ROOM";
+    default:
+      return String(access).toUpperCase().replace(/-/g, "_");
+  }
+}
+
 export default function HostListings() {
+  const queryClient = useQueryClient();
   const [activeStep, setActiveStep] = useState(0);
 
   const [propertyType, setPropertyType] = useState<PropertyType>("apartment");
@@ -31,7 +59,6 @@ export default function HostListings() {
     useState<PlaceAccessType>("entire");
 
   const [propertyDetails, setPropertyDetails] = useState<PropertyDetails>({
-    name: "",
     address: "",
     city: "",
     state: "",
@@ -53,6 +80,36 @@ export default function HostListings() {
   const [description, setDescription] = useState("");
 
   const [pricePerNight, setPricePerNight] = useState("");
+
+  const createMutation = useMutation({
+    mutationFn: createListing,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      setActiveStep(hostingSteps.length);
+    },
+  });
+
+  function handleCreateListing() {
+    createMutation.mutate({
+      title: title,
+      description,
+      propertyType: mapPropertyType(propertyType),
+      guestAccess: mapGuestAccess(placeAccessType),
+      address: propertyDetails.address,
+      city: propertyDetails.city,
+      province: propertyDetails.state,
+      postalCode: propertyDetails.zipCode,
+      country: propertyDetails.country,
+      guests: roomDetails.guests,
+      maxGuests: roomDetails.guests,
+      beds: roomDetails.beds,
+      bedrooms: roomDetails.bedrooms,
+      bathrooms: roomDetails.bathrooms,
+      status: "LIVE",
+      amenities,
+      basePrice: Number(pricePerNight) || 0,
+    });
+  }
 
   /*
    * Finished
@@ -77,6 +134,18 @@ export default function HostListings() {
         },
       }}
     >
+      {createMutation.isError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to create listing. Please try again.
+        </Alert>
+      )}
+
+      {createMutation.isPending && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {/*
        * 0 - Property type
        */}
@@ -168,7 +237,7 @@ export default function HostListings() {
           value={pricePerNight}
           onChange={setPricePerNight}
           onBack={() => setActiveStep(6)}
-          onNext={() => setActiveStep(8)}
+          onNext={handleCreateListing}
         />
       )}
     </Box>
