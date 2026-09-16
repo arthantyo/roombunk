@@ -7,11 +7,15 @@ import { ReviewCard } from "./ReviewCard";
 export function ReviewsModalContent({
   onClose,
   guestReviews,
+  rating = 0,
+  reviewCount = 0,
   ratingDistribution = [],
   reviewCategories = [],
   reviewMentions = [],
 }: {
   onClose: () => void;
+  rating?: number;
+  reviewCount?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   guestReviews: any[];
   ratingDistribution?: [number, number][];
@@ -42,7 +46,7 @@ export function ReviewsModalContent({
         }}
       >
         <Typography sx={{ fontSize: "1.25rem", fontWeight: 600 }}>
-          4.78 · 151 reviews
+          {rating.toFixed(2)} · {reviewCount} reviews
         </Typography>
 
         <IconButton onClick={onClose}>

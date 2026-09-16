@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Box, Button, Divider, Skeleton, Typography } from "@mui/material";
 import { getListingById } from "../api/listings";
+import { getReviewsByListingId } from "../api/reviews";
 import BookingSidebar from "./BookingSidebar";
 import { BookmarkBorder, GridView, Star } from "@mui/icons-material";
 import ReviewSummary from "./ReviewSummary";
@@ -21,7 +22,7 @@ function tomorrowIso() {
   return d.toISOString().slice(0, 10);
 }
 
-export default function Hotel() {
+export default function Listing() {
   const { id } = useParams();
   const { isAuthenticated, openAuthModal } = useAuth();
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -38,6 +39,11 @@ export default function Hotel() {
     queryFn: () => getListingById(id!),
     enabled: !!id,
   });
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", id],
+    queryFn: () => getReviewsByListingId(id!),
+    enabled: !!id,
+  });
 
   const nights = useMemo(() => {
     const start = new Date(checkInDate);
@@ -45,6 +51,14 @@ export default function Hotel() {
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
     return diff > 0 ? diff : 0;
   }, [checkInDate, checkOutDate]);
+
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    return (
+      reviews.reduce((total, review) => total + review.overallRating, 0) /
+      reviews.length
+    ).toFixed(2);
+  }, [reviews]);
 
   const handleCheckInChange = (value: string) => {
     setCheckInDate(value);
@@ -351,7 +365,7 @@ export default function Hotel() {
               >
                 <Typography sx={{ fontWeight: 500, fontSize: "1.05rem" }}>
                   <Star sx={{ color: "black", fontSize: 10, mr: 0.5 }} />
-                  4.78 •
+                  {averageRating} •
                 </Typography>
                 <Typography
                   sx={{
@@ -361,7 +375,7 @@ export default function Hotel() {
                     cursor: "pointer",
                   }}
                 >
-                  121 reviews
+                  {reviews.length} reviews
                 </Typography>
               </Box>
 
@@ -381,17 +395,7 @@ export default function Hotel() {
 
           <Divider sx={{ mb: 3 }} />
 
-          <AmenitySection
-            amenities={[
-              "WIFI",
-              "BALCONY",
-              "ELEVATOR",
-              "TV",
-              "BBQ",
-              "DINING_AREA",
-              "GARDEN",
-            ]}
-          />
+          <AmenitySection amenities={listing.amenities ?? []} />
         </Box>
         <Box
           sx={{
@@ -419,7 +423,7 @@ export default function Hotel() {
         </Box>
       </Box>
       <Divider sx={{ my: 4 }} />
-      <ReviewSummary />
+      <ReviewSummary listingId={listing.id} />
     </Box>
   );
 }

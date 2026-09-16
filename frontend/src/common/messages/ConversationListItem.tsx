@@ -27,6 +27,8 @@ export function ConversationListItem({ conversation, active, onClick }: Props) {
     >
       <Stack direction="row" spacing={2}>
         <Box
+          component="img"
+          src={conversation.avatar}
           sx={{
             width: 72,
             height: 72,
@@ -46,10 +48,6 @@ export function ConversationListItem({ conversation, active, onClick }: Props) {
             <Typography variant="body2" color="text.secondary">
               {conversation.dates}
             </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              2/1
-            </Typography>
           </Stack>
 
           <Typography sx={{ fontWeight: 600 }}>{conversation.title}</Typography>
@@ -64,7 +62,7 @@ export function ConversationListItem({ conversation, active, onClick }: Props) {
               overflow: "hidden",
             }}
           >
-            {conversation.preview}
+            Click to start a conversation
           </Typography>
         </Box>
       </Stack>

@@ -8,11 +8,11 @@ import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Layout from "./layout/Layout";
 import Home from "./home/Home.tsx";
-import Hotel from "./hotel/Hotel.tsx";
-import Checkout from "./checkout/Checkout.tsx";
+import Listing from "./listing/Listing.tsx";
 import Reservations from "./reservations/Reservations.tsx";
 import PageNotFound from "./layout/PageNotFound";
 import Wishlist from "./wishlist/Wishlist.tsx";
+import WishlistGroup from "./wishlist/WishlistGroup.tsx";
 import Precheckout from "./precheckout/Precheckout.tsx";
 import Hosting from "./host/listings/HostListings.tsx";
 import HostListingDetail from "./host/listings/id/HostListingDetail.tsx";
@@ -20,6 +20,7 @@ import Host from "./host/Host.tsx";
 import HotelReservations from "./host/reservations/HostReservations.tsx";
 import HostMessages from "./host/messages/HostMessages.tsx";
 import GuestMessages from "./messages/GuestMessage.tsx";
+import CheckoutSuccess from "./checkout/CheckoutSuccess.tsx";
 
 const queryClient = new QueryClient();
 
@@ -32,13 +33,14 @@ function App() {
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
-              <Route path="/listings/:id" element={<Hotel />} />
+              <Route path="/listings/:id" element={<Listing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/reservations" element={<Reservations />} />
                 <Route path="/wishlists" element={<Wishlist />} />
+                <Route path="/wishlists/:id" element={<WishlistGroup />} />
                 <Route path="/book/:id" element={<Precheckout />} />
                 <Route path="/messages" element={<GuestMessages />} />
 

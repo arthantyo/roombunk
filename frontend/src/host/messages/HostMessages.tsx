@@ -34,10 +34,10 @@ export default function HostMessages() {
     () =>
       (reservationsQuery.data ?? []).map((reservation) => ({
         id: String(reservation.id),
-        title: `Listing #${reservation.listingId}`,
+        title: `${reservation.listing.title}`,
         dates: `${formatDate(reservation.checkInDate)} - ${formatDate(reservation.checkOutDate)}`,
         preview: reservation.status,
-        avatar: "/images/apartment-placeholder.png",
+        avatar: "/images/apartment-stock.png",
       })),
     [reservationsQuery.data],
   );

@@ -24,9 +24,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+                                    HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
 
@@ -51,8 +49,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             response.setHeader("Retry-After", String.valueOf(result.resetSeconds()));
 
             String jsonResponse = String.format(
-                    "{\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Please try again in %d seconds.\",\"retryAfterSeconds\":%d}",
-                    result.resetSeconds(), result.resetSeconds());
+                    "{\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Please try again in %d seconds.\",\"retryAfterSeconds\":%d}", result.resetSeconds(), result.resetSeconds());
 
             response.getWriter().write(jsonResponse);
             return;
@@ -65,7 +62,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/v1/auth/")) {
             return RateLimiterService.BucketType.AUTH;
         }
-        if (path.equals("/api/v1/reservations/hold") || path.equals("/api/v1/payments/create-intent")) {
+        if (path.equals("/api/v1/reservations/hold") || path.equals("/api/v1/payments/create-checkout-session")) {
             return RateLimiterService.BucketType.SENSITIVE;
         }
         return RateLimiterService.BucketType.GENERAL;

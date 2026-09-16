@@ -1,7 +1,5 @@
 import { apiFetch } from "./client";
-import type { PaymentIntentResponse } from "./types";
-
-export interface CreatePaymentIntentRequest {
+export interface CreateCheckoutSessionRequest {
   listingId: number;
   checkInDate: string;
   checkOutDate: string;
@@ -11,9 +9,16 @@ export interface CreatePaymentIntentRequest {
   pets: number;
 }
 
-export function createPaymentIntent(request: CreatePaymentIntentRequest) {
-  return apiFetch<PaymentIntentResponse>("/payments/create-intent", {
-    method: "POST",
-    body: JSON.stringify(request),
-  });
+export interface CheckoutSessionResponse {
+  url: string;
+}
+
+export function createCheckoutSession(request: CreateCheckoutSessionRequest) {
+  return apiFetch<CheckoutSessionResponse>(
+    "/payments/create-checkout-session",
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
 }

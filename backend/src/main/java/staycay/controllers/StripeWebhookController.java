@@ -1,5 +1,6 @@
 package staycay.controllers;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -16,150 +17,114 @@ import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
-import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.RefundCreateParams;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import staycay.models.Reservation;
+import staycay.models.ReservationPayment;
+import staycay.models.enums.PaymentStatus;
+import staycay.repositories.ReservationPaymentRepository;
 import staycay.services.ReservationService;
 
 @RestController
 @RequestMapping("/api/v1/stripe")
 @RequiredArgsConstructor
 public class StripeWebhookController {
+    private final ReservationService reservationService;
+    private final ReservationPaymentRepository paymentRepository;
 
-	private final ReservationService reservationService;
+    @Value("${stripe.webhook.secret}")
+    private String stripeWebhookSecret;
 
-	@Value("${stripe.webhook.secret}")
-	private String stripeWebhookSecret;
+    @PostMapping("/webhook")
+    @Transactional
+    public ResponseEntity<String> handleStripeWebhook(
+                                                      @RequestBody String payload, @RequestHeader(value = "Stripe-Signature", required = false) String signatureHeader) {
+        if (signatureHeader == null || signatureHeader.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing Stripe-Signature header");
+        }
 
-	@PostMapping("/webhook")
-	public ResponseEntity<String> handleStripeWebhook(
-														@RequestBody String payload, @RequestHeader("Stripe-Signature") String signatureHeader) {
+        final Event event;
+        try {
+            event = Webhook.constructEvent(payload, signatureHeader, stripeWebhookSecret);
+        } catch (SignatureVerificationException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
+        }
 
-		if (signatureHeader == null || signatureHeader.isEmpty()) {
-			return ResponseEntity.badRequest().body("Missing Stripe-Signature header");
-		}
+        if (!"checkout.session.completed".equals(event.getType())) {
+            return ResponseEntity.ok("Event ignored");
+        }
 
-		Event event;
+        try {
+            Object dataObject = event.getDataObjectDeserializer().getObject().orElse(null);
+            if (dataObject == null) {
+                dataObject = event.getDataObjectDeserializer().deserializeUnsafe();
+            }
+            if (!(dataObject instanceof Session session)) {
+                return ResponseEntity.badRequest().body("No Checkout Session found");
+            }
+            return processCompletedSession(session);
+        } catch (EventDataObjectDeserializationException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unable to read Checkout Session");
+        }
+    }
 
+    private ResponseEntity<String> processCompletedSession(Session session) {
+        if (paymentRepository.findByStripeCheckoutSessionId(session.getId()).isPresent()) {
+            return ResponseEntity.ok("Checkout Session already processed");
+        }
 
-		try {
-			event = Webhook.constructEvent(payload, signatureHeader, stripeWebhookSecret);
-		} catch (SignatureVerificationException ex) {
-			System.out.println("Webhook signature verification failed.");
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
-		}
+        Map<String, String> metadata = session.getMetadata();
+        try {
+            Long userId = Long.valueOf(required(metadata, "userId"));
+            Long listingId = Long.valueOf(required(metadata, "listingId"));
+            LocalDate checkIn = LocalDate.parse(required(metadata, "checkInDate"));
+            LocalDate checkOut = LocalDate.parse(required(metadata, "checkOutDate"));
+            Integer adults = Integer.valueOf(required(metadata, "adults"));
+            Integer children = Integer.valueOf(required(metadata, "children"));
+            Integer infants = Integer.valueOf(required(metadata, "infants"));
+            Integer pets = Integer.valueOf(required(metadata, "pets"));
 
-		// only for charges 
-		// if ("charge.succeeded".equals(event.getType())) {
-		// 	return handleChargeSucceeded(event);
-		// } 
+            Reservation reservation = reservationService.confirmReservation(
+                    userId, listingId, checkIn, checkOut, adults, children, infants, pets, session.getId());
 
-		if ("payment_intent.succeeded".equals(event.getType())) {
-			System.out.println("PaymentIntent succeeded event received.");
-			return handlePaymentIntentSucceeded(event);
-		}
+            ReservationPayment payment = new ReservationPayment();
+            payment.setReservation(reservation);
+            payment.setStripeCheckoutSessionId(session.getId());
+            payment.setStripePaymentIntentId(session.getPaymentIntent() == null ? session.getId() : session.getPaymentIntent());
+            payment.setAmount(BigDecimal.valueOf(session.getAmountTotal()).movePointLeft(2));
+            payment.setCurrency(session.getCurrency() == null ? "eur" : session.getCurrency());
+            payment.setStatus(PaymentStatus.SUCCEEDED);
+            paymentRepository.save(payment);
+            return ResponseEntity.ok("Reservation confirmed: " + reservation.getId());
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            refundPayment(session.getPaymentIntent());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Reservation could not be completed; payment refunded");
+        } catch (RuntimeException ex) {
+            refundPayment(session.getPaymentIntent());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment processing failed");
+        }
+    }
 
-		return ResponseEntity.ok("Event type not handled: " + event.getType());
-	}
+    private String required(Map<String, String> metadata, String key) {
+        if (metadata == null || metadata.get(key) == null || metadata.get(key).isBlank()) {
+            throw new IllegalArgumentException("Missing metadata: " + key);
+        }
+        return metadata.get(key);
+    }
 
-	// private ResponseEntity<String> handleChargeSucceeded(Event event) {
-	// 	Object dataObject = event.getDataObjectDeserializer().getObject().orElse(null);
-	// 	if (dataObject == null) {
-	// 		return ResponseEntity.badRequest().body("No data in event");
-	// 	}
-
-	// 	com.stripe.model.Charge charge = (com.stripe.model.Charge) dataObject;
-	// 	return processReservation(charge.getMetadata());
-	// }
-
-	private ResponseEntity<String> handlePaymentIntentSucceeded(Event event) {
-
-		try {
-			// event.getId() is the Event's own id (evt_...), not the PaymentIntent id (pi_...) -
-			// pull the PaymentIntent straight out of the event payload instead of retrieving by id.
-			com.stripe.model.EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
-			Object dataObject = deserializer.getObject().orElse(null);
-			if (dataObject == null) {
-				dataObject = deserializer.deserializeUnsafe();
-			}
-
-			if (dataObject == null) {
-				System.out.println(event.getId() + " No PaymentIntent found.");
-				return ResponseEntity.badRequest().body("No data in event");
-			}
-
-			PaymentIntent paymentIntent = (PaymentIntent) dataObject;
-			Map<String, String> metadata = paymentIntent.getMetadata();
-
-			System.out.println(event.getId() + "Received PaymentIntent succeeded event: ");
-
-			return processReservation(paymentIntent);
-		} catch (EventDataObjectDeserializationException ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + ex.getMessage());
-		}
-	}
-
-	private ResponseEntity<String> processReservation(PaymentIntent paymentIntent) {
-		Map<String, String> metadata = paymentIntent.getMetadata();
-		try {
-			if (metadata == null || metadata.isEmpty()) {
-				return ResponseEntity.badRequest().body("No metadata in payment");
-			}
-
-			Long userId = Long.valueOf(metadata.getOrDefault("userId", ""));
-			Long listingId = Long.valueOf(metadata.getOrDefault("listingId", ""));
-			LocalDate checkInDate = LocalDate.parse(metadata.getOrDefault("checkInDate", ""));
-			LocalDate checkOutDate = LocalDate.parse(metadata.getOrDefault("checkOutDate", ""));
-			Integer adults = Integer.valueOf(metadata.getOrDefault("adults", "0"));
-			Integer children = Integer.valueOf(metadata.getOrDefault("children", "0"));
-			Integer infants = Integer.valueOf(metadata.getOrDefault("infants", "0"));
-			Integer pets = Integer.valueOf(metadata.getOrDefault("pets", "0"));
-			String idempotencyKey = metadata.getOrDefault("idempotencyKey", "");
-
-			if (idempotencyKey.isEmpty()) {
-				return ResponseEntity.badRequest().body("Missing required metadata fields");
-			}
-
-			System.out.println("Processing reservation for userId: " + userId + ", listingId: " + listingId);
-
-			// Call confirmReservation with the extracted metadata
-			Reservation reservation = reservationService.confirmReservation(
-					userId, listingId, checkInDate, checkOutDate, adults, children, infants, pets, idempotencyKey
-			);
-
-
-			return ResponseEntity.ok("Reservation confirmed: " + reservation.getId());
-
-		} catch (IllegalArgumentException ex) {
-			// Payment already succeeded but the room couldn't be booked (e.g. lost
-			// the race to another confirmed reservation, or the hold was taken
-			// over and the room is now genuinely unavailable) - refund the charge
-			// so the customer isn't billed for a reservation that doesn't exist.
-			System.out.println("Invalid metadata: " + ex.getMessage());
-			refundPayment(paymentIntent.getId(), ex.getMessage());
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Reservation could not be completed, payment refunded: " + ex.getMessage());
-		} catch (IllegalStateException ex) {
-			System.out.println("State error: " + ex.getMessage());
-			refundPayment(paymentIntent.getId(), ex.getMessage());
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Reservation state error: " + ex.getMessage());
-		} catch (RuntimeException ex) {
-			System.out.println("Unexpected error: " + ex.getMessage());
-			refundPayment(paymentIntent.getId(), ex.getMessage());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing payment: " + ex.getMessage());
-		}
-	}
-
-	private void refundPayment(String paymentIntentId, String reason) {
-		try {
-			Refund.create(RefundCreateParams.builder().setPaymentIntent(paymentIntentId).build());
-			System.out.println("Refunded payment intent " + paymentIntentId + " (" + reason + ")");
-		} catch (StripeException ex) {
-			// Refund failed - needs manual follow-up, but must not block the webhook response.
-			System.out.println("Failed to refund payment intent " + paymentIntentId + ": " + ex.getMessage());
-		}
-	}
+    private void refundPayment(String paymentIntentId) {
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            return;
+        }
+        try {
+            Refund.create(RefundCreateParams.builder().setPaymentIntent(paymentIntentId).build());
+        } catch (StripeException ignored) {
+            // Payment succeeded but reservation creation failed; retain the webhook response for Stripe retry/manual review.
+        }
+    }
 }

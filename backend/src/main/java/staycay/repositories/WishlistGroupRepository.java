@@ -10,4 +10,6 @@ public interface WishlistGroupRepository extends JpaRepository<WishlistGroup, Lo
     List<WishlistGroup> findByUserId(Long userId);
 
     java.util.Optional<WishlistGroup> findByIdAndUserId(Long id, Long userId);
+
+    void deleteByUserIdAndId(Long userId, Long id);
 }

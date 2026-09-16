@@ -31,3 +31,15 @@ export function addListingToWishlist(request: AddListingToWishlistRequest) {
     body: JSON.stringify(request),
   });
 }
+
+export function removeListingFromWishlist(listingId: number) {
+  return apiFetch<void>(`/wishlist/${listingId}`, {
+    method: "DELETE",
+  });
+}
+
+export function removeWishlistGroup(groupId: number) {
+  return apiFetch<void>(`/wishlist/groups/${groupId}`, {
+    method: "DELETE",
+  });
+}

@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Alert, Box, Button, Typography } from "@mui/material";
 
 import { useState } from "react";
 import { CheckoutStep } from "./CheckoutStep";
@@ -6,13 +6,15 @@ import { CheckoutStep } from "./CheckoutStep";
 type StepId = "paymentTiming" | "paymentMethod" | "message" | "review";
 
 type PrecheckoutStepsProps = {
-  onReviewRequest?: () => void;
+  onReviewRequest?: () => Promise<void>;
 };
 
 export default function PrecheckoutSteps({
   onReviewRequest,
 }: PrecheckoutStepsProps) {
   const [expanded, setExpanded] = useState<StepId | false>("paymentTiming");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [completed, setCompleted] = useState<Record<StepId, boolean>>({
     paymentTiming: false,
@@ -244,13 +246,28 @@ export default function PrecheckoutSteps({
           <Button
             fullWidth
             variant="contained"
-            onClick={() => {
+            disabled={isSubmitting}
+            onClick={async () => {
+              if (isSubmitting) return;
+              setSubmitError(null);
               setCompleted((current) => ({
                 ...current,
                 review: true,
               }));
 
-              onReviewRequest?.();
+              setIsSubmitting(true);
+              try {
+                await onReviewRequest?.();
+              } catch (error) {
+                setCompleted((current) => ({ ...current, review: false }));
+                setSubmitError(
+                  error instanceof Error
+                    ? error.message
+                    : "Unable to start checkout. Please try again.",
+                );
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
             sx={{
               bgcolor: "#0f6f5c",
@@ -264,8 +281,13 @@ export default function PrecheckoutSteps({
               },
             }}
           >
-            Confirm and pay
+            {isSubmitting ? "Opening secure checkout..." : "Confirm and pay"}
           </Button>
+          {submitError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {submitError}
+            </Alert>
+          )}
         </Box>
       </CheckoutStep>
     </Box>

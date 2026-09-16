@@ -26,6 +26,21 @@ export interface ListingDto {
   verified?: boolean;
 }
 
+export interface ReviewDto {
+  id: number;
+  content: string;
+  overallRating: number;
+  cleanliness: number;
+  accuracy: number;
+  checkIn: number;
+  communication: number;
+  location: number;
+  valueForMoney: number;
+  user?: {
+    username?: string;
+  };
+}
+
 export interface WishlistGroupDto {
   id: number;
   name: string;
@@ -46,9 +61,25 @@ export type ReservationStatus =
 export interface ReservationDto {
   id: number;
   userId: number;
+  hostId: number;
   listingId: number;
+  listing: {
+    id: number;
+    title: string;
+    description?: string;
+    address: string;
+    city: string;
+    province?: string;
+    country: string;
+    basePrice: number;
+  };
   checkInDate: string;
   checkOutDate: string;
+  adults: number;
+  children: number;
+  infants: number;
+  pets: number;
+  confirmationCode: string;
   status: ReservationStatus;
   createdAt: string;
 }

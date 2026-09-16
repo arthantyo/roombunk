@@ -2,7 +2,7 @@ import { BookmarkBorder } from "@mui/icons-material";
 import { Box, Card, CardMedia, IconButton, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import WishlistModal from "../hotel/WishlistModal";
+import WishlistModal from "../listing/WishlistModal";
 import { useAuth } from "../auth/useAuth";
 import type { ListingDto } from "../api/types";
 

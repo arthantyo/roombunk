@@ -21,32 +21,35 @@ import staycay.models.enums.PaymentStatus;
 
 @Entity
 @Table(
-        name = "reservation_payments", uniqueConstraints = @UniqueConstraint(
-                name = "uk_payment_stripe_intent", columnNames = "stripe_payment_intent_id"
-        )
+                name = "reservation_payments", uniqueConstraints = @UniqueConstraint(
+                                name = "uk_payment_stripe_intent", columnNames = "stripe_payment_intent_id"
+                )
 )
 @Getter
 @Setter
 @NoArgsConstructor
 public class ReservationPayment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reservation_id", nullable = false)
-    private Reservation reservation;
+        @ManyToOne(fetch = FetchType.LAZY, optional = false)
+        @JoinColumn(name = "reservation_id", nullable = false)
+        private Reservation reservation;
 
-    @Column(name = "stripe_payment_intent_id", nullable = false, unique = true)
-    private String stripePaymentIntentId;
+        @Column(name = "stripe_payment_intent_id", nullable = false, unique = true)
+        private String stripePaymentIntentId;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+        @Column(name = "stripe_checkout_session_id", unique = true)
+        private String stripeCheckoutSessionId;
 
-    @Column(nullable = false, length = 3)
-    private String currency;
+        @Column(nullable = false, precision = 12, scale = 2)
+        private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status;
+        @Column(nullable = false, length = 3)
+        private String currency;
+
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false)
+        private PaymentStatus status;
 }

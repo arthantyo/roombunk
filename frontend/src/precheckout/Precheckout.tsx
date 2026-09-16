@@ -1,23 +1,50 @@
 import { Box, Typography } from "@mui/material";
-import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useSearchParams } from "react-router-dom";
 import dayjs from "dayjs";
 
+import { getListingById } from "../api/listings";
+import { createCheckoutSession } from "../api/payments";
 import CheckoutSummary from "./CheckoutSummary";
 import PrecheckoutSteps from "./PrecheckoutSteps/PrecheckoutSteps";
 
 export default function Precheckout() {
+  const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { data: listing, isLoading } = useQuery({
+    queryKey: ["listing", id],
+    queryFn: () => getListingById(id!),
+    enabled: !!id,
+  });
 
-  const checkInDate = searchParams.get("checkIn") ?? "2026-09-12";
+  const defaultCheckIn = dayjs().format("YYYY-MM-DD");
+  const defaultCheckOut = dayjs().add(1, "day").format("YYYY-MM-DD");
 
-  const checkOutDate = searchParams.get("checkOut") ?? "2026-09-15";
+  const checkInDate = searchParams.get("checkIn") ?? defaultCheckIn;
+  const checkOutDate = searchParams.get("checkOut") ?? defaultCheckOut;
 
   const adults = Number(searchParams.get("adults") ?? 1);
   const childrenCount = Number(searchParams.get("children") ?? 0);
   const infants = Number(searchParams.get("infants") ?? 0);
   const pets = searchParams.get("pets") === "true";
 
-  const nightlyRate = 145;
+  if (isLoading) {
+    return (
+      <Typography sx={{ maxWidth: 1120, mx: "auto", p: 4 }}>
+        Loading booking...
+      </Typography>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <Typography sx={{ maxWidth: 1120, mx: "auto", p: 4 }}>
+        Listing not found.
+      </Typography>
+    );
+  }
+
+  const nightlyRate = listing.basePrice;
   const serviceFee = 2;
 
   const nights = Math.max(
@@ -78,14 +105,23 @@ export default function Precheckout() {
         }}
       >
         <PrecheckoutSteps
-          onReviewRequest={() => {
-            console.log("review booking");
+          onReviewRequest={async () => {
+            const { url } = await createCheckoutSession({
+              listingId: listing.id,
+              checkInDate,
+              checkOutDate,
+              adults,
+              children: childrenCount,
+              infants,
+              pets: pets ? 1 : 0,
+            });
+
+            window.location.href = url;
           }}
         />
-
         <CheckoutSummary
           image="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85"
-          hotelName="The Hoxton Amsterdam"
+          hotelName={listing.title}
           rating={4.78}
           checkInDate={checkInDate}
           checkOutDate={checkOutDate}

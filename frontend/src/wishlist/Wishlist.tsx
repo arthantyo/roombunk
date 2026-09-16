@@ -1,23 +1,62 @@
 import { useQuery } from "@tanstack/react-query";
-import { Box, Skeleton, Typography, Zoom } from "@mui/material";
-import { getMyWishlists } from "../api/wishlists";
+import {
+  Box,
+  Card,
+  CardMedia,
+  IconButton,
+  Skeleton,
+  Typography,
+  Zoom,
+} from "@mui/material";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link as RouterLink } from "react-router-dom";
+import {
+  getMyWishlistGroups,
+  getMyWishlists,
+  removeWishlistGroup,
+} from "../api/wishlists";
 import { Error } from "../common/Error";
+import { CloseRounded } from "@mui/icons-material";
 
 export default function Wishlist() {
-  const { data, isLoading, isError } = useQuery({
+  const queryClient = useQueryClient();
+
+  const {
+    data: wishlists = [],
+    isLoading: wishlistsLoading,
+    isError: wishlistsError,
+  } = useQuery({
     queryKey: ["myWishlist"],
     queryFn: getMyWishlists,
   });
 
+  const {
+    data: groups = [],
+    isLoading: groupsLoading,
+    isError: groupsError,
+  } = useQuery({
+    queryKey: ["wishlist-groups"],
+    queryFn: getMyWishlistGroups,
+  });
+
+  const removeGroupMutation = useMutation({
+    mutationFn: removeWishlistGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-groups"] });
+    },
+  });
+
+  const isLoading = wishlistsLoading || groupsLoading;
+  const isError = wishlistsError || groupsError;
+
   const gridSx = {
     display: "grid",
     gridTemplateColumns: {
-      xs: "repeat(2, minmax(0, 1fr))",
-      sm: "repeat(3, minmax(0, 1fr))",
-      md: "repeat(4, minmax(0, 1fr))",
+      xs: "minmax(0, 1fr)",
+      sm: "repeat(2, minmax(0, 1fr))",
     },
     gap: 2,
-    mt: 3,
+    mt: 4,
   };
 
   return (
@@ -37,7 +76,7 @@ export default function Wishlist() {
           fontSize: { xs: "1.5rem", sm: "2rem" },
         }}
       >
-        Wishlist
+        Wishlists
       </Typography>
 
       {isError && <Error />}
@@ -67,7 +106,7 @@ export default function Wishlist() {
           ))}
         </Box>
       )}
-      {!isLoading && data?.length === 0 && (
+      {!isLoading && !isError && groups.length === 0 && (
         <Box
           sx={{
             minHeight: 420,
@@ -109,46 +148,115 @@ export default function Wishlist() {
         </Box>
       )}
 
-      {/* <Box sx={gridSx}>
-        <Box>
-          <Box
-            sx={{
-              width: "100%",
-              aspectRatio: "1 / 1",
-              backgroundColor: "grey.300",
-              borderRadius: 2,
-              justifyContent: "center",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <History sx={{ fontSize: { xs: 40, sm: 60 }, color: "grey.600" }} />
-          </Box>
+      {!isLoading && !isError && groups.length > 0 && (
+        <Box sx={gridSx}>
+          {groups.map((group) => {
+            const groupWishlists = wishlists.filter(
+              (wishlist) => wishlist.group.id === group.id,
+            );
+            const previewListing = groupWishlists[0]?.listing;
 
-          <Typography
-            sx={{ mt: 1, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
-          >
-            Recently viewed
-          </Typography>
+            return (
+              <Card
+                key={group.id}
+                component={RouterLink}
+                to={`/wishlists/${group.id}`}
+                sx={{
+                  minWidth: 0,
+                  background: "transparent",
+                  boxShadow: "none",
+                  textDecoration: "none",
+                  color: "inherit",
+                  position: "relative",
+
+                  "& .delete-button": {
+                    opacity: 0,
+                    transition: "opacity 0.2s",
+                  },
+
+                  "&:hover .delete-button": {
+                    opacity: 1,
+                  },
+                }}
+              >
+                <IconButton
+                  className="delete-button"
+                  onClick={(e) => {
+                    // Prevent clicking the X from navigating to the wishlist
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    removeGroupMutation.mutate(group.id);
+                  }}
+                  sx={{
+                    position: "absolute",
+                    top: 14,
+                    left: 14,
+                    zIndex: 2,
+                    bgcolor: "background.paper",
+                    boxShadow: 1,
+
+                    "&:hover": {
+                      bgcolor: "background.paper",
+                    },
+                  }}
+                  size="small"
+                >
+                  <CloseRounded fontSize="medium" />
+                </IconButton>
+                <Box
+                  sx={{
+                    width: "100%",
+                    aspectRatio: "1 / 1",
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    backgroundColor: "grey.200",
+                  }}
+                >
+                  {previewListing ? (
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        width: "100%",
+                        height: "100%",
+                        gap: "4px",
+                      }}
+                    >
+                      {[
+                        "apartment-stock.png",
+                        "hotel-stock.png",
+                        "studio-stock.png",
+                        "apartment-stock.png",
+                      ].map((image, index) => (
+                        <CardMedia
+                          key={`${group.id}-${index}`}
+                          component="img"
+                          image={`/images/${image}`}
+                          alt={index === 0 ? previewListing.title : ""}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Box sx={{ width: "100%", height: "100%" }} />
+                  )}
+                </Box>
+                <Typography sx={{ mt: 1, fontWeight: 600 }} noWrap>
+                  {group.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {groupWishlists.length} saved
+                </Typography>
+              </Card>
+            );
+          })}
         </Box>
-
-        <Box>
-          <Box
-            sx={{
-              width: "100%",
-              aspectRatio: "1 / 1",
-              backgroundColor: "grey.300",
-              borderRadius: 2,
-            }}
-          />
-
-          <Typography
-            sx={{ mt: 1, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
-          >
-            Asiatour 2027
-          </Typography>
-        </Box>
-      </Box> */}
+      )}
     </Box>
   );
 }

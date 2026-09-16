@@ -9,5 +9,7 @@ import staycay.models.ReservationPayment;
 public interface ReservationPaymentRepository extends JpaRepository<ReservationPayment, Long> {
     Optional<ReservationPayment> findByStripePaymentIntentId(String stripePaymentIntentId);
 
+    Optional<ReservationPayment> findByStripeCheckoutSessionId(String stripeCheckoutSessionId);
+
     Optional<ReservationPayment> findByReservationId(Long reservationId);
 }

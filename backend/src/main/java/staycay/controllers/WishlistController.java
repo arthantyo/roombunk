@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import staycay.models.Listing;
 import staycay.models.User;
@@ -80,10 +81,27 @@ public class WishlistController {
         return ResponseEntity.ok(wishlistRepository.save(wishlist));
     }
 
+    @Transactional
     @DeleteMapping("/{listingId}")
     public ResponseEntity<Void> removeFromWishlist(
                                                    @AuthenticationPrincipal UserPrincipal principal, @PathVariable Long listingId) {
-        wishlistRepository.deleteByUserIdAndListingId(principal.userId(), listingId);
+
+        wishlistRepository.deleteByUserIdAndListingId(
+                principal.userId(), listingId
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @Transactional
+    @DeleteMapping("/groups/{groupId}")
+    public ResponseEntity<Void> removeWishlistGroup(
+                                                    @AuthenticationPrincipal UserPrincipal principal, @PathVariable Long groupId) {
+
+        wishlistGroupRepository.deleteByUserIdAndId(
+                principal.userId(), groupId
+        );
+
         return ResponseEntity.noContent().build();
     }
 

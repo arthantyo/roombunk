@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,7 @@ public class ReservationService {
                 reservation.setInfants(infants);
                 reservation.setPets(pets);
                 reservation.setStatus(ReservationStatus.PENDING);
+                reservation.setConfirmationCode(generateConfirmationCode());
 
                 Reservation saved = reservationRepository.save(reservation);
 
@@ -244,5 +246,9 @@ public class ReservationService {
                 }
         }
 
+
+        private String generateConfirmationCode() {
+                return UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        }
 
 }

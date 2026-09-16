@@ -15,87 +15,85 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { Star } from "@mui/icons-material";
 import OutlinedFlagIcon from "@mui/icons-material/OutlinedFlag";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getReviewsByListingId } from "../api/reviews";
+import type { ReviewDto } from "../api/types";
 import { ReviewsModalContent } from "./ReviewSummary/ReviewsModalContent";
 import { ReviewCard } from "./ReviewSummary/ReviewCard";
 import { ReviewMentions } from "./ReviewSummary/ReviewMentions";
 import { ReviewStats } from "./ReviewSummary/ReviewStats";
-const ratingDistribution: [number, number][] = [
-  [5, 72],
-  [4, 18],
-  [3, 6],
-  [2, 3],
-  [1, 1],
-];
-
-const reviewCategories = [
-  { label: "Cleanliness", score: 4.6, Icon: CleanHandsOutlinedIcon },
-  { label: "Accuracy", score: 4.8, Icon: CheckCircleOutlineOutlinedIcon },
-  { label: "Check-in", score: 4.8, Icon: OutlinedFlagIcon },
-  { label: "Communication", score: 4.9, Icon: ChatBubbleOutlineOutlinedIcon },
-  { label: "Location", score: 4.8, Icon: LocationOnOutlinedIcon },
-  { label: "Value", score: 4.8, Icon: LocalOfferOutlinedIcon },
-];
-
-const guestReviews = [
+const categoryDefinitions = [
   {
-    name: "Bennet",
-    stay: "6 years on Roombunk",
-    date: "July 2026",
-    text: "We had a really good time here. Johanna was very nice and the house was exactly as we expected",
-    avatar: "https://i.pravatar.cc/96?img=12",
+    label: "Cleanliness",
+    field: "cleanliness" as const,
+    Icon: CleanHandsOutlinedIcon,
   },
   {
-    name: "Marrit",
-    stay: "10 years on Roombunk",
-    date: "3 weeks ago",
-    text: "A cozily furnished wooden cottage on a quiet green property where chickens with chicks and peacocks roam around. Surrounded by beautiful tall trees that provide pleasant ...",
-    avatar: "https://i.pravatar.cc/96?img=32",
-    expandable: true,
+    label: "Accuracy",
+    field: "accuracy" as const,
+    Icon: CheckCircleOutlineOutlinedIcon,
+  },
+  { label: "Check-in", field: "checkIn" as const, Icon: OutlinedFlagIcon },
+  {
+    label: "Communication",
+    field: "communication" as const,
+    Icon: ChatBubbleOutlineOutlinedIcon,
   },
   {
-    name: "Bianca",
-    stay: "5 months on Roombunk",
-    date: "August 2026",
-    text: "Had a great week's vacation with our dog! Communication with Johanna and her husband was fast and good. Nicely laid-out property with its own piece of garden and a very ...",
-    avatar: "https://i.pravatar.cc/96?img=47",
-    expandable: true,
+    label: "Location",
+    field: "location" as const,
+    Icon: LocationOnOutlinedIcon,
   },
   {
-    name: "Elvira",
-    stay: "1 month on Roombunk",
-    date: "July 2026",
-    text: "Perfectly fine. Nice, quiet place, beautiful cottage with everything you need and a nice hostess.",
-    avatar: "https://i.pravatar.cc/96?img=44",
-  },
-  {
-    name: "Ferdie",
-    stay: "1 year on Roombunk",
-    date: "July 2026",
-    text: "We had a nice time. It was just confusing that there are two bedrooms in the description, but in reality there is only one, which should be ...",
-    avatar: "https://i.pravatar.cc/96?img=68",
-    expandable: true,
-  },
-  {
-    name: "Nidal",
-    stay: "10 years on Roombunk",
-    date: "July 2026",
-    text: "Very lovely place to chill and enjoy the nature.",
-    avatar: "https://i.pravatar.cc/96?img=53",
+    label: "Value",
+    field: "valueForMoney" as const,
+    Icon: LocalOfferOutlinedIcon,
   },
 ];
 
-const reviewMentions: [string, number][] = [
-  ["Hospitality", 66],
-  ["Biking", 7],
-  ["Outdoor spaces", 25],
-  ["Indoor spaces", 24],
-  ["Location", 48],
-  ["Pets", 14],
-  ["Decor", 11],
-];
+function average(reviews: ReviewDto[], field: keyof ReviewDto) {
+  if (reviews.length === 0) return 0;
+  return (
+    reviews.reduce((total, review) => total + Number(review[field] ?? 0), 0) /
+    reviews.length
+  );
+}
 
-export default function ReviewSummary() {
+export default function ReviewSummary({ listingId }: { listingId: number }) {
   const [reviewsOpen, setReviewsOpen] = useState(false);
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", listingId],
+    queryFn: () => getReviewsByListingId(listingId),
+  });
+
+  const rating = average(reviews, "overallRating");
+  const ratingDistribution: [number, number][] = [5, 4, 3, 2, 1].map(
+    (stars) => [
+      stars,
+      reviews.length === 0
+        ? 0
+        : Math.round(
+            (reviews.filter((review) => review.overallRating === stars).length /
+              reviews.length) *
+              100,
+          ),
+    ],
+  );
+  const reviewCategories = categoryDefinitions.map(
+    ({ label, field, Icon }) => ({
+      label,
+      score: average(reviews, field),
+      Icon,
+    }),
+  );
+  const guestReviews = reviews.map((review) => ({
+    name: review.user?.username || "Guest",
+    stay: "Verified guest review",
+    date: "",
+    text: review.content,
+    avatar: undefined,
+  }));
+  const reviewMentions: [string, number][] = [];
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -122,7 +120,7 @@ export default function ReviewSummary() {
         >
           <Star sx={{ color: "#222222", fontSize: 22 }} />
           <Typography sx={{ fontSize: "1.35rem", fontWeight: 500 }}>
-            4.78 · 151 reviews
+            {rating.toFixed(2)} · {reviews.length} reviews
           </Typography>
         </Box>
 
@@ -182,6 +180,8 @@ export default function ReviewSummary() {
         >
           <ReviewsModalContent
             guestReviews={guestReviews}
+            rating={rating}
+            reviewCount={reviews.length}
             ratingDistribution={ratingDistribution}
             reviewCategories={reviewCategories}
             reviewMentions={reviewMentions}
@@ -207,6 +207,8 @@ export default function ReviewSummary() {
         >
           <ReviewsModalContent
             guestReviews={guestReviews}
+            rating={rating}
+            reviewCount={reviews.length}
             ratingDistribution={ratingDistribution}
             reviewCategories={reviewCategories}
             reviewMentions={reviewMentions}

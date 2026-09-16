@@ -192,19 +192,16 @@ export default function BookingSidebar({
       />
       <ButtonBase
         onClick={() =>
-          navigate("/checkout", {
-            state: {
-              listingId: listing.id,
-              listingTitle: listing.title,
-              basePrice: listing.basePrice,
-              checkInDate,
-              checkOutDate,
-              adults,
-              children: childrenCount,
-              infants,
-              pets: pets ? 1 : 0,
-              nights,
-            },
+          navigate({
+            pathname: `/book/${listing.id}`,
+            search: new URLSearchParams({
+              checkIn: checkInDate,
+              checkOut: checkOutDate,
+              adults: String(adults),
+              children: String(childrenCount),
+              infants: String(infants),
+              pets: String(pets),
+            }).toString(),
           })
         }
         disabled={
