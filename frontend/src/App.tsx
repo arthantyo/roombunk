@@ -20,7 +20,6 @@ import Host from "./host/Host.tsx";
 import HotelReservations from "./host/reservations/HostReservations.tsx";
 import HostMessages from "./host/messages/HostMessages.tsx";
 import GuestMessages from "./messages/GuestMessage.tsx";
-import CheckoutSuccess from "./checkout/CheckoutSuccess.tsx";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +35,6 @@ function App() {
               <Route path="/listings/:id" element={<Listing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/checkout/success" element={<CheckoutSuccess />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/reservations" element={<Reservations />} />
                 <Route path="/wishlists" element={<Wishlist />} />

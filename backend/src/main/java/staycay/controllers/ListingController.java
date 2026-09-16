@@ -2,9 +2,11 @@ package staycay.controllers;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import staycay.models.Listing;
 import staycay.repositories.ListingRepository;
 import staycay.repositories.UserRepository;
 import staycay.security.UserPrincipal;
+import staycay.services.ListingService;
 
 @RestController
 @RequestMapping("/api/v1/listings")
@@ -25,6 +28,7 @@ import staycay.security.UserPrincipal;
 public class ListingController {
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final ListingService listingService;
 
     @GetMapping
     public List<Listing> getListings() {
@@ -58,10 +62,15 @@ public class ListingController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteListing(@PathVariable Long id) {
-        if (!listingRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        listingRepository.deleteById(id);
+        listingService.archiveListing(id);
+
         return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalState(
+                                                     IllegalStateException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 }

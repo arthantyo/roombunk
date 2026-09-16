@@ -89,8 +89,7 @@ export function ListingEditor({ id, initialData }: Props) {
       }}
     >
       <ListingEditorHeader
-        listingId={id}
-        title={title || propertyDetails.name}
+        title={title}
         activeStep={activeStep}
         onStepChange={setActiveStep}
       />

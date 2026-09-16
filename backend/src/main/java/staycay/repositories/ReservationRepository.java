@@ -1,6 +1,7 @@
 package staycay.repositories;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,9 @@ import staycay.models.enums.ReservationStatus;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @Query("SELECT r FROM Reservation r JOIN FETCH r.listing WHERE r.user.id = :userId")
     List<Reservation> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.listing JOIN FETCH r.user WHERE r.host.id = :hostId ORDER BY r.checkInDate ASC")
+    List<Reservation> findByHostId(@Param("hostId") Long hostId);
 
     List<Reservation> findByListingId(Long listingId);
 
@@ -38,5 +42,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             """)
     List<Reservation> findOverlappingReservationsByStatus(
                                                           @Param("listingId") Long listingId, @Param("checkInDate") LocalDate checkInDate, @Param("checkOutDate") LocalDate checkOutDate, @Param("status") ReservationStatus status
+    );
+
+    boolean existsByListingIdAndStatusNotIn(
+                                            Long listingId, Collection<ReservationStatus> statuses
     );
 }

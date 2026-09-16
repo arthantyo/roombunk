@@ -1,5 +1,5 @@
 package staycay.models.enums;
 
 public enum ListingStatus {
-    DRAFT, LIVE
+    DRAFT, LIVE, ARCHIVED
 };

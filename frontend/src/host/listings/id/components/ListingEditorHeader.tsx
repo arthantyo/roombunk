@@ -1,18 +1,14 @@
 import { useRef, useEffect } from "react";
-import { Link as RouterLink } from "react-router-dom";
-import { Box, Breadcrumbs, Chip, Link, Stack, Typography } from "@mui/material";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import { hostingSteps } from "../../constants";
 
 type Props = {
-  listingId: string;
   title: string;
   activeStep: number;
   onStepChange: (step: number) => void;
 };
 
 export function ListingEditorHeader({
-  listingId,
   title,
   activeStep,
   onStepChange,
@@ -29,22 +25,6 @@ export function ListingEditorHeader({
 
   return (
     <Stack spacing={2} sx={{ mb: 4 }}>
-      <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        aria-label="breadcrumb"
-      >
-        <Link
-          component={RouterLink}
-          underline="hover"
-          color="inherit"
-          to="/host/listings"
-        >
-          Listings
-        </Link>
-
-        <Typography color="text.primary">Edit listing #{listingId}</Typography>
-      </Breadcrumbs>
-
       <Box
         sx={{
           display: "flex",

@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { Box, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 
+import { getHostReservations } from "../../api/reservations";
+import type { ReservationDto } from "../../api/types";
 import { EmptyReservations } from "./EmptyReservations";
 import type { HostReservation } from "./component/ReservationCard";
 import { ReservationCard } from "./component/ReservationCard";
@@ -15,23 +25,27 @@ export default function HostReservations() {
   const [selectedReservation, setSelectedReservation] =
     useState<HostReservation | null>(null);
 
-  const reservations: HostReservation[] = [
-    {
-      id: "1",
-      guestName: "Alex Morgan",
-      propertyName: "Modern apartment in Groningen",
-      checkIn: "2026-09-15",
-      checkOut: "2026-09-19",
-      bookingDate: "2026-09-02",
-      confirmationCode: "RBK-94821",
-      guests: 2,
-      nights: 4,
-      status: "pending",
-      totalPaid: 620,
-      serviceFee: 62,
-      hostPayout: 558,
-    },
-  ];
+  const reservationsQuery = useQuery({
+    queryKey: ["host-reservations"],
+    queryFn: getHostReservations,
+  });
+
+  const reservations = useMemo(
+    () =>
+      (reservationsQuery.data ?? [])
+        .map(toHostReservation)
+        .filter((reservation) => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const checkIn = new Date(`${reservation.checkIn}T00:00:00`);
+          const checkOut = new Date(`${reservation.checkOut}T00:00:00`);
+
+          return filter === "today"
+            ? checkIn <= today && checkOut > today
+            : checkIn > today;
+        }),
+    [filter, reservationsQuery.data],
+  );
 
   function handleAccept(reservation: HostReservation) {
     console.log("accept", reservation.id);
@@ -39,6 +53,14 @@ export default function HostReservations() {
 
   function handleCancel(reservation: HostReservation) {
     console.log("cancel", reservation.id);
+  }
+
+  if (reservationsQuery.isLoading) {
+    return <CircularProgress sx={{ display: "block", mx: "auto", mt: 8 }} />;
+  }
+
+  if (reservationsQuery.isError) {
+    return <Alert severity="error">Unable to load your reservations.</Alert>;
   }
 
   return (
@@ -125,4 +147,42 @@ export default function HostReservations() {
       />
     </>
   );
+}
+
+function toHostReservation(reservation: ReservationDto): HostReservation {
+  const nights = Math.max(
+    1,
+    Math.round(
+      (new Date(`${reservation.checkOutDate}T00:00:00`).getTime() -
+        new Date(`${reservation.checkInDate}T00:00:00`).getTime()) /
+        (1000 * 60 * 60 * 24),
+    ),
+  );
+  const totalPaid = (reservation.listing?.basePrice ?? 0) * nights;
+  const serviceFee = totalPaid * 0.1;
+
+  return {
+    id: String(reservation.id),
+    guestName: `Guest #${reservation.userId}`,
+    propertyName: reservation.listing?.title ?? "Your listing",
+    checkIn: reservation.checkInDate,
+    checkOut: reservation.checkOutDate,
+    bookingDate: reservation.createdAt,
+    confirmationCode: reservation.confirmationCode,
+    guests:
+      reservation.adults +
+      reservation.children +
+      reservation.infants +
+      reservation.pets,
+    nights,
+    status:
+      reservation.status === "PENDING"
+        ? "pending"
+        : reservation.status === "CONFIRMED"
+          ? "accepted"
+          : "cancelled",
+    totalPaid,
+    serviceFee,
+    hostPayout: totalPaid - serviceFee,
+  };
 }

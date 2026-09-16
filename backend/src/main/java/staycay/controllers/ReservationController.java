@@ -65,6 +65,12 @@ public class ReservationController {
         return ResponseEntity.ok(toResponses(reservationService.getReservationsByUserId(user.userId())));
     }
 
+    @GetMapping("/host")
+    public ResponseEntity<List<ReservationDto>> getHostReservations(
+                                                                    @AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(toResponses(reservationService.getReservationsByHostId(user.userId())));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ReservationDto> getReservationById(
                                                              @PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
@@ -103,19 +109,19 @@ public class ReservationController {
                 reservationService.acceptReservation(id, user.userId())));
     }
 
-        @PatchMapping("/{id}/reject")
-        public ResponseEntity<ReservationDto> rejectReservation(
-                                    @PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ReservationDto> rejectReservation(
+                                                            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
         return ResponseEntity.ok(ReservationDto.from(
-            reservationService.rejectReservation(id, user.userId())));
-        }
+                reservationService.rejectReservation(id, user.userId())));
+    }
 
-        @PatchMapping("/{id}/cancel")
-        public ResponseEntity<ReservationDto> cancelReservation(
-                                    @PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ReservationDto> cancelReservation(
+                                                            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
         return ResponseEntity.ok(ReservationDto.from(
-            reservationService.cancelReservation(id, user.userId())));
-        }
+                reservationService.cancelReservation(id, user.userId())));
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<ReservationDto> updateReservation(

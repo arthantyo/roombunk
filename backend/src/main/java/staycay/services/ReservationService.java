@@ -109,6 +109,10 @@ public class ReservationService {
                 return reservationRepository.findByUserId(userId);
         }
 
+        public List<Reservation> getReservationsByHostId(Long hostId) {
+                return reservationRepository.findByHostId(hostId);
+        }
+
         public List<Reservation> getReservationsByListingId(Long listingId) {
                 return reservationRepository.findByListingId(listingId);
         }

@@ -5,6 +5,10 @@ export function getMyReservations() {
   return apiFetch<ReservationDto[]>("/reservations/");
 }
 
+export function getHostReservations() {
+  return apiFetch<ReservationDto[]>("/reservations/host");
+}
+
 export function getListingAvailability(
   listingId: number | string,
   from: string,
