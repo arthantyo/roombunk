@@ -24,7 +24,7 @@ function tomorrowIso() {
 
 export default function Listing() {
   const { id } = useParams();
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, openAuthModal, user } = useAuth();
   const [wishlistOpen, setWishlistOpen] = useState(false);
 
   const [checkInDate, setCheckInDate] = useState(todayIso());
@@ -363,20 +363,25 @@ export default function Listing() {
                   marginBottom: 1.5,
                 }}
               >
-                <Typography sx={{ fontWeight: 500, fontSize: "1.05rem" }}>
-                  <Star sx={{ color: "black", fontSize: 10, mr: 0.5 }} />
-                  {averageRating} •
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: 500,
-                    fontSize: "1.05rem",
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                  }}
-                >
-                  {reviews.length} reviews
-                </Typography>
+                {reviews.length > 0 && (
+                  <>
+                    <Typography sx={{ fontWeight: 500, fontSize: "1.05rem" }}>
+                      <Star sx={{ color: "black", fontSize: 10, mr: 0.5 }} />
+                      {averageRating} •
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        fontSize: "1.05rem",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {reviews.length} reviews
+                    </Typography>
+                  </>
+                )}
               </Box>
 
               <Typography
@@ -413,6 +418,7 @@ export default function Listing() {
             pets={pets}
             minCheckInDate={todayIso()}
             nights={nights}
+            isOwner={user?.userId === listing.host?.id}
             onCheckInChange={handleCheckInChange}
             onCheckOutChange={setCheckOutDate}
             onAdultsChange={setAdults}

@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import staycay.dto.ConversationResponse;
 import staycay.models.Message;
 import staycay.repositories.MessageRepository;
 import staycay.repositories.ReservationRepository;
 import staycay.repositories.UserRepository;
 import staycay.security.UserPrincipal;
+import staycay.services.MessageService;
 
 @RestController
 @RequestMapping("/api/v1/messages")
@@ -26,6 +28,17 @@ public class MessageController {
     private final MessageRepository messageRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final MessageService messageService;
+
+
+    @GetMapping("/conversations")
+    public ResponseEntity<List<ConversationResponse>> getConversations(
+                                                                       @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(
+                messageService.getConversations(principal.userId())
+        );
+    }
 
     @GetMapping("/reservation/{reservationId}")
     public ResponseEntity<List<MessageResponse>> getMessages(

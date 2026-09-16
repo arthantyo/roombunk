@@ -28,7 +28,7 @@ import staycay.security.UserPrincipal;
 @RequiredArgsConstructor
 public class PaymentController {
     private static final String CURRENCY = "eur";
-    private static final BigDecimal SERVICE_FEE = BigDecimal.valueOf(2);
+    private static final BigDecimal SERVICE_FEE_RATE = BigDecimal.valueOf(3);
 
     private final ListingRepository listingRepository;
 
@@ -67,7 +67,11 @@ public class PaymentController {
         BigDecimal extraGuestPrice = BigDecimal.valueOf(
                 configuredExtraGuestPrice == null ? 0D : configuredExtraGuestPrice.doubleValue());
         BigDecimal nightlyPrice = BigDecimal.valueOf(listing.getBasePrice()).add(extraGuestPrice.multiply(BigDecimal.valueOf(extraGuests)));
-        BigDecimal total = nightlyPrice.multiply(BigDecimal.valueOf(nights)).add(SERVICE_FEE);
+        BigDecimal subtotal = nightlyPrice.multiply(BigDecimal.valueOf(nights));
+
+        BigDecimal serviceFee = subtotal.multiply(SERVICE_FEE_RATE);
+
+        BigDecimal total = subtotal.add(serviceFee);
         long amountInCents = total.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValueExact();
 
         SessionCreateParams params = SessionCreateParams.builder().setMode(SessionCreateParams.Mode.PAYMENT).setSuccessUrl(successUrl).setCancelUrl(cancelUrl + "/" + listing.getId()).addLineItem(SessionCreateParams.LineItem.builder().setQuantity(1L).setPriceData(SessionCreateParams.LineItem.PriceData.builder().setCurrency(CURRENCY).setUnitAmount(amountInCents).setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder().setName(listing.getTitle()).build()).build()).build()).putMetadata("userId", String.valueOf(user.userId())).putMetadata("listingId", String.valueOf(listing.getId())).putMetadata("checkInDate", request.checkInDate().toString()).putMetadata("checkOutDate", request.checkOutDate().toString()).putMetadata("adults", String.valueOf(adults)).putMetadata("children", String.valueOf(children)).putMetadata("infants", String.valueOf(infants)).putMetadata("pets", String.valueOf(pets)).build();

@@ -1,4 +1,7 @@
+import type { ReservationStatus } from "../../api/types";
+
 export type Conversation = {
+  reservationStatus: ReservationStatus;
   id: string;
   title: string;
   dates: string;

@@ -76,7 +76,7 @@ export default function CheckoutSummary({
   const [guestsOpen, setGuestsOpen] = useState(false);
 
   const subtotal = nightlyRate * nights;
-  const total = subtotal + serviceFee;
+  const total = subtotal + subtotal * serviceFee;
 
   const guests = adults + childrenCount;
 
@@ -320,7 +320,7 @@ export default function CheckoutSummary({
         >
           <Typography sx={{ color: "text.secondary" }}>Service fee</Typography>
 
-          <Typography>{formatMoney(serviceFee)}</Typography>
+          <Typography>{formatMoney(subtotal * serviceFee)}</Typography>
         </Box>
 
         <Divider sx={{ my: 2.5 }} />

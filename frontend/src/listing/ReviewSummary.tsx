@@ -60,11 +60,17 @@ function average(reviews: ReviewDto[], field: keyof ReviewDto) {
 }
 
 export default function ReviewSummary({ listingId }: { listingId: number }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", listingId],
     queryFn: () => getReviewsByListingId(listingId),
   });
+
+  if (reviews.length === 0) {
+    return null;
+  }
 
   const rating = average(reviews, "overallRating");
   const ratingDistribution: [number, number][] = [5, 4, 3, 2, 1].map(
@@ -94,9 +100,6 @@ export default function ReviewSummary({ listingId }: { listingId: number }) {
     avatar: undefined,
   }));
   const reviewMentions: [string, number][] = [];
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <>

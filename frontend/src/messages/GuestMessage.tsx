@@ -38,6 +38,7 @@ export default function GuestMessages() {
         dates: `${formatDate(reservation.checkInDate)} - ${formatDate(reservation.checkOutDate)}`,
         preview: reservation.status.toLowerCase(),
         avatar: "/images/apartment-stock.png",
+        reservationStatus: reservation.status,
       })),
     [reservationsQuery.data],
   );
@@ -129,7 +130,11 @@ export default function GuestMessages() {
               Unable to load messages.
             </Alert>
           ) : (
-            <MessageList messages={messages} currentUserRole="guest" />
+            <MessageList
+              messages={messages}
+              currentUserRole="guest"
+              reservationStatus={selectedConversation.reservationStatus}
+            />
           )}
           <MessageComposer
             value={message}

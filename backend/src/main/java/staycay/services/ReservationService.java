@@ -56,6 +56,10 @@ public class ReservationService {
                         );
                 }
 
+                if (listing.getHost() != null && listing.getHost().getId().equals(userId)) {
+                        throw new IllegalArgumentException("Listing owners cannot reserve their own listing.");
+                }
+
                 List<Reservation> conflicts = reservationRepository.findOverlappingReservations(
                                 listingId, checkIn, checkOut
                 );

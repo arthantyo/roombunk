@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { ReservationStatus } from "./types";
 
 export interface ApiMessage {
   id: number;
@@ -21,4 +22,17 @@ export function sendMessage(request: SendMessageRequest) {
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+export type ConversationResponse = {
+  reservationId: number;
+  otherUserId: number;
+  otherUsername: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  reservationStatus: ReservationStatus;
+};
+
+export function getConversations() {
+  return apiFetch<ConversationResponse[]>("/messages/conversations");
 }

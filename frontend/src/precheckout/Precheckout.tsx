@@ -45,7 +45,7 @@ export default function Precheckout() {
   }
 
   const nightlyRate = listing.basePrice;
-  const serviceFee = 2;
+  const serviceFee = 0.3;
 
   const nights = Math.max(
     1,

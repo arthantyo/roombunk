@@ -38,6 +38,7 @@ interface BookingSidebarProps {
   pets: boolean;
   minCheckInDate: string;
   nights: number;
+  isOwner: boolean;
   onCheckInChange: (value: string) => void;
   onCheckOutChange: (value: string) => void;
   onAdultsChange: (value: number) => void;
@@ -56,6 +57,7 @@ export default function BookingSidebar({
   pets,
   minCheckInDate,
   nights,
+  isOwner,
   onCheckInChange,
   onCheckOutChange,
   onAdultsChange,
@@ -205,6 +207,7 @@ export default function BookingSidebar({
           })
         }
         disabled={
+          isOwner ||
           nights <= 0 ||
           (listing.maxGuests != null && totalGuests > listing.maxGuests)
         }
@@ -218,7 +221,7 @@ export default function BookingSidebar({
           color: "#fff",
         }}
       >
-        Reserve
+        {isOwner ? "You own this listing" : "Reserve"}
       </ButtonBase>
 
       <Typography
@@ -230,7 +233,9 @@ export default function BookingSidebar({
           mt: 1,
         }}
       >
-        Your host will accept or reject the reservation.
+        {isOwner
+          ? "You cannot reserve your own listing."
+          : "Your host will accept or reject the reservation."}
       </Typography>
     </Box>
   );

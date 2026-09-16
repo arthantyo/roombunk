@@ -1,14 +1,20 @@
 import { useEffect, useRef } from "react";
-import { Box, Stack, Zoom } from "@mui/material";
+import { Box, Stack, Typography, Zoom } from "@mui/material";
 import { MessageBubble } from "./MessageBubble";
 import type { Message } from "./types";
+import type { ReservationStatus } from "../../api/types";
 
 type Props = {
   messages: Message[];
   currentUserRole: "host" | "guest";
+  reservationStatus: ReservationStatus;
 };
 
-export function MessageList({ messages, currentUserRole }: Props) {
+export function MessageList({
+  messages,
+  currentUserRole,
+  reservationStatus,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -51,6 +57,25 @@ export function MessageList({ messages, currentUserRole }: Props) {
             </Zoom>
           );
         })}
+
+        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {reservationStatus === "PENDING" &&
+              (currentUserRole === "guest"
+                ? "Awaiting approval from the host"
+                : "Reservation awaiting your approval")}
+
+            {reservationStatus === "CONFIRMED" &&
+              (currentUserRole === "guest"
+                ? "Your reservation has been approved"
+                : "You approved this reservation")}
+
+            {reservationStatus === "CANCELLED" &&
+              (currentUserRole === "guest"
+                ? "Your reservation was declined"
+                : "You declined this reservation")}
+          </Typography>
+        </Box>
 
         <Box ref={bottomRef} />
       </Stack>

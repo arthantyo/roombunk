@@ -52,12 +52,31 @@ public class ListingController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Listing> updateListing(@PathVariable Long id, @RequestBody Listing listing) {
-        if (!listingRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        listing.setId(id);
-        return ResponseEntity.ok(listingRepository.save(listing));
+    public ResponseEntity<Listing> updateListing(
+                                                 @PathVariable Long id, @RequestBody Listing updates, @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return listingRepository.findById(id).map(listing -> {
+            listing.setTitle(updates.getTitle());
+            listing.setDescription(updates.getDescription());
+            listing.setBasePrice(updates.getBasePrice());
+
+            listing.setMaxGuests(updates.getMaxGuests());
+            listing.setGuests(updates.getGuests());
+            listing.setBedrooms(updates.getBedrooms());
+            listing.setBeds(updates.getBeds());
+            listing.setBathrooms(updates.getBathrooms());
+
+            listing.setAmenities(updates.getAmenities());
+            listing.setPropertyType(updates.getPropertyType());
+
+            listing.setAddress(updates.getAddress());
+            listing.setCity(updates.getCity());
+            listing.setProvince(updates.getProvince());
+            listing.setPostalCode(updates.getPostalCode());
+            listing.setCountry(updates.getCountry());
+
+            return ResponseEntity.ok(listingRepository.save(listing));
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

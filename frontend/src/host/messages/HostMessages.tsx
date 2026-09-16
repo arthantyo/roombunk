@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, CircularProgress } from "@mui/material";
-import { getMyReservations } from "../../api/reservations";
-import { getReservationMessages, sendMessage } from "../../api/messages";
+import {
+  getConversations,
+  getReservationMessages,
+  sendMessage,
+} from "../../api/messages";
 import { useAuth } from "../../auth/useAuth";
 import { ConversationHeader } from "../../common/messages/ConversationHeader";
 import { MessageComposer } from "../../common/messages/MessageComposer";
@@ -10,13 +13,13 @@ import { MessageList } from "../../common/messages/MessageList";
 import { MessagesSidebar } from "../../common/messages/MessageSidebar";
 import type { Conversation, Message } from "../../common/messages/types";
 
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
-}
+// function formatDate(date: string) {
+//   return new Intl.DateTimeFormat("en-US", {
+//     month: "short",
+//     day: "numeric",
+//     timeZone: "UTC",
+//   }).format(new Date(`${date}T00:00:00Z`));
+// }
 
 export default function HostMessages() {
   const { user } = useAuth();
@@ -25,21 +28,20 @@ export default function HostMessages() {
     useState<Conversation | null>(null);
   const [message, setMessage] = useState("");
 
-  const reservationsQuery = useQuery({
-    queryKey: ["my-reservations"],
-    queryFn: getMyReservations,
+  const conversationsQuery = useQuery({
+    queryKey: ["conversations"],
+    queryFn: getConversations,
   });
 
-  const conversations = useMemo<Conversation[]>(
-    () =>
-      (reservationsQuery.data ?? []).map((reservation) => ({
-        id: String(reservation.id),
-        title: `${reservation.listing.title}`,
-        dates: `${formatDate(reservation.checkInDate)} - ${formatDate(reservation.checkOutDate)}`,
-        preview: reservation.status,
-        avatar: "/images/apartment-stock.png",
-      })),
-    [reservationsQuery.data],
+  const conversations: Conversation[] = (conversationsQuery.data ?? []).map(
+    (conversation) => ({
+      id: String(conversation.reservationId),
+      title: conversation.otherUsername,
+      preview: conversation.lastMessage,
+      dates: new Date(conversation.lastMessageAt).toLocaleDateString(),
+      avatar: "/images/apartment-stock.png",
+      reservationStatus: conversation.reservationStatus,
+    }),
   );
 
   const reservationId = selectedConversation
@@ -76,11 +78,19 @@ export default function HostMessages() {
     sendMutation.mutate(content);
   }
 
-  if (reservationsQuery.isLoading) {
-    return <CircularProgress sx={{ display: "block", mx: "auto", mt: 8 }} />;
+  if (conversationsQuery.isLoading) {
+    return (
+      <CircularProgress
+        sx={{
+          display: "block",
+          mx: "auto",
+          mt: 8,
+        }}
+      />
+    );
   }
 
-  if (reservationsQuery.error) {
+  if (conversationsQuery.error) {
     return <Alert severity="error">Unable to load your conversations.</Alert>;
   }
 
@@ -142,7 +152,11 @@ export default function HostMessages() {
               Unable to load messages.
             </Alert>
           ) : (
-            <MessageList messages={messages} currentUserRole="host" />
+            <MessageList
+              messages={messages}
+              currentUserRole="host"
+              reservationStatus={selectedConversation.reservationStatus}
+            />
           )}
 
           <MessageComposer

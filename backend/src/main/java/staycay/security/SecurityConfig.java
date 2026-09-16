@@ -45,7 +45,7 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/auth/**").permitAll().requestMatchers("/api/v1/hotels/**", "/api/v1/rooms/**").permitAll().requestMatchers("/api/v1/reservations/listing/*/availability").permitAll().requestMatchers("/api/v1/stripe/webhook").permitAll().anyRequest().authenticated()).oauth2ResourceServer(oauth -> oauth.jwt(
+        http.csrf(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/auth/**").permitAll().requestMatchers("/api/v1/listings/**", "/api/v1/rooms/**").permitAll().requestMatchers("/api/v1/reservations/listing/*/availability").permitAll().requestMatchers("/api/v1/stripe/webhook").permitAll().anyRequest().authenticated()).oauth2ResourceServer(oauth -> oauth.jwt(
                 jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))).addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }

@@ -48,7 +48,7 @@ export function ListingEditor({ id, initialData }: Props) {
         beds: roomDetails.beds,
         bathrooms: roomDetails.bathrooms,
         amenities,
-        propertyType,
+        propertyType: propertyType.toUpperCase(),
         address: propertyDetails.address,
         city: propertyDetails.city,
         province: propertyDetails.state,
