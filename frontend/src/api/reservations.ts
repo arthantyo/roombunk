@@ -14,7 +14,7 @@ export function getListingAvailability(
   from: string,
   to: string,
 ) {
-  return apiFetch<{ start: string; end: string }[]>(
+  return apiFetch<{ from: string; to: string }[]>(
     `/reservations/listing/${listingId}/availability?from=${from}&to=${to}`,
   );
 }

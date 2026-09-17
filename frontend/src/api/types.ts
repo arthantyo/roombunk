@@ -24,7 +24,7 @@ export interface ListingDto {
   status: ListingStatus;
 
   verified?: boolean;
-  host?: { id: number };
+  host?: { id: number; username?: string; createdAt?: string };
 }
 
 export interface ReviewDto {

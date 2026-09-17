@@ -1,14 +1,35 @@
-import { BookmarkBorder } from "@mui/icons-material";
+import { Bookmark, BookmarkBorder } from "@mui/icons-material";
 import { Box, Card, CardMedia, IconButton, Typography } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import WishlistModal from "../listing/WishlistModal";
 import { useAuth } from "../auth/useAuth";
 import type { ListingDto } from "../api/types";
+import {
+  getMyWishlistedListingIds,
+  removeListingFromWishlist,
+} from "../api/wishlists";
 
 export function ListingCard({ listing }: { listing: ListingDto }) {
   const { isAuthenticated, openAuthModal } = useAuth();
   const [wishlistOpen, setWishlistOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: wishlistedIds = [] } = useQuery({
+    queryKey: ["wishlisted-listing-ids"],
+    queryFn: getMyWishlistedListingIds,
+    enabled: isAuthenticated,
+  });
+
+  const isWishlisted = wishlistedIds.includes(listing.id);
+
+  const removeMutation = useMutation({
+    mutationFn: () => removeListingFromWishlist(listing.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlisted-listing-ids"] });
+    },
+  });
 
   return (
     <>
@@ -47,12 +68,20 @@ export function ListingCard({ listing }: { listing: ListingDto }) {
             }}
           />
           <IconButton
-            aria-label={`Save ${listing.title} to a wishlist`}
+            aria-label={
+              isWishlisted
+                ? `Remove ${listing.title} from your wishlist`
+                : `Save ${listing.title} to a wishlist`
+            }
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
               if (!isAuthenticated) {
                 openAuthModal();
+                return;
+              }
+              if (isWishlisted) {
+                removeMutation.mutate();
                 return;
               }
               setWishlistOpen(true);
@@ -68,7 +97,11 @@ export function ListingCard({ listing }: { listing: ListingDto }) {
               ":hover": { background: "rgba(255,255,255,0.95)" },
             }}
           >
-            <BookmarkBorder fontSize="small" sx={{ color: "#1d1d1d" }} />
+            {isWishlisted ? (
+              <Bookmark fontSize="small" sx={{ color: "#e0433d" }} />
+            ) : (
+              <BookmarkBorder fontSize="small" sx={{ color: "#1d1d1d" }} />
+            )}
           </IconButton>
         </Box>
         <Box sx={{ mt: 1.2, px: 0.5 }}>

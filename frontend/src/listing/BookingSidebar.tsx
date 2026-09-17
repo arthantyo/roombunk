@@ -2,6 +2,7 @@ import { Box, ButtonBase, TextField, Typography } from "@mui/material";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ListingDto } from "../api/types";
+import { getListingAvailability } from "../api/reservations";
 import GuestsPopover from "./GuestsPopover";
 
 function fieldLabelSx(label: string) {
@@ -47,6 +48,8 @@ interface BookingSidebarProps {
   onPetsChange: (value: boolean) => void;
 }
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function BookingSidebar({
   listing,
   checkInDate,
@@ -68,6 +71,10 @@ export default function BookingSidebar({
   const guestFieldRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const [guestAnchor, setGuestAnchor] = useState<HTMLElement | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(
+    null,
+  );
   const totalGuests = adults + childrenCount;
   const guestSummaryParts = [
     `${totalGuests} guest${totalGuests === 1 ? "" : "s"}`,
@@ -193,22 +200,50 @@ export default function BookingSidebar({
         onClose={() => setGuestAnchor(null)}
       />
       <ButtonBase
-        onClick={() =>
-          navigate({
-            pathname: `/book/${listing.id}`,
-            search: new URLSearchParams({
-              checkIn: checkInDate,
-              checkOut: checkOutDate,
-              adults: String(adults),
-              children: String(childrenCount),
-              infants: String(infants),
-              pets: String(pets),
-            }).toString(),
-          })
-        }
+        onClick={async () => {
+          setAvailabilityError(null);
+          setCheckingAvailability(true);
+          try {
+            await delay(1000);
+
+            const availableRanges = await getListingAvailability(
+              listing.id,
+              checkInDate,
+              checkOutDate,
+            );
+            const isFullyAvailable = availableRanges.some(
+              (range) =>
+                range.from === checkInDate && range.to === checkOutDate,
+            );
+            if (!isFullyAvailable) {
+              setAvailabilityError(
+                "These dates are no longer available for this listing.",
+              );
+              return;
+            }
+            navigate({
+              pathname: `/book/${listing.id}`,
+              search: new URLSearchParams({
+                checkIn: checkInDate,
+                checkOut: checkOutDate,
+                adults: String(adults),
+                children: String(childrenCount),
+                infants: String(infants),
+                pets: String(pets),
+              }).toString(),
+            });
+          } catch {
+            setAvailabilityError(
+              "Couldn't verify availability. Please try again.",
+            );
+          } finally {
+            setCheckingAvailability(false);
+          }
+        }}
         disabled={
           isOwner ||
           nights <= 0 ||
+          checkingAvailability ||
           (listing.maxGuests != null && totalGuests > listing.maxGuests)
         }
         aria-haspopup="dialog"
@@ -221,8 +256,25 @@ export default function BookingSidebar({
           color: "#fff",
         }}
       >
-        {isOwner ? "You own this listing" : "Reserve"}
+        {isOwner
+          ? "You own this listing"
+          : checkingAvailability
+            ? "Checking availability…"
+            : "Reserve"}
       </ButtonBase>
+
+      {availabilityError && (
+        <Typography
+          sx={{
+            color: "#c0392b",
+            textAlign: "center",
+            fontSize: "0.75rem",
+            mt: 1,
+          }}
+        >
+          {availabilityError}
+        </Typography>
+      )}
 
       <Typography
         sx={{

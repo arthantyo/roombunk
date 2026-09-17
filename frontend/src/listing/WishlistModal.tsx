@@ -71,6 +71,9 @@ export default function WishlistModal({
       await queryClient.invalidateQueries({
         queryKey: ["wishlist-groups"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["wishlisted-listing-ids"],
+      });
 
       setSelectedId(null);
       setNewWishlistName("");

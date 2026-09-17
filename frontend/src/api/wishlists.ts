@@ -18,6 +18,10 @@ export function getMyWishlistGroups() {
   return apiFetch<WishlistGroupDto[]>("/wishlist/groups");
 }
 
+export function getMyWishlistedListingIds() {
+  return apiFetch<number[]>("/wishlist/listing-ids");
+}
+
 export function createWishlistGroup(request: CreateWishlistGroupRequest) {
   return apiFetch<WishlistGroupDto>("/wishlist/groups", {
     method: "POST",

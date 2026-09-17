@@ -43,11 +43,16 @@ public class WishlistController {
         return wishlistGroupRepository.findByUserId(principal.userId());
     }
 
+    @GetMapping("/listing-ids")
+    public List<Long> getMyWishlistedListingIds(@AuthenticationPrincipal UserPrincipal principal) {
+        return wishlistRepository.findListingIdsByUserId(principal.userId());
+    }
+
     @PostMapping("/groups")
     public ResponseEntity<WishlistGroup> createGroup(
                                                      @AuthenticationPrincipal UserPrincipal principal, @RequestBody GroupRequest request) {
         if (request.name() == null || request.name().isBlank()) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalArgumentException("Wishlist name is required.");
         }
         User user = userRepository.findById(principal.userId()).orElse(null);
         if (user == null) {
@@ -62,11 +67,11 @@ public class WishlistController {
     @PostMapping
     public ResponseEntity<Wishlist> addToWishlist(
                                                   @AuthenticationPrincipal UserPrincipal principal, @RequestBody ListingRequest request) {
-        if (request.groupId() == null) {
-            return ResponseEntity.badRequest().build();
+        if (request.groupId() == null || request.listingId() == null) {
+            throw new IllegalArgumentException("A listing and a wishlist are required.");
         }
         if (wishlistRepository.existsByGroupIdAndListingId(request.groupId(), request.listingId())) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalArgumentException("This listing is already saved to that wishlist.");
         }
         User user = userRepository.findById(principal.userId()).orElse(null);
         Listing listing = listingRepository.findById(request.listingId()).orElse(null);
